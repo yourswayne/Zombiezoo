@@ -1,0 +1,147 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: grey;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+#zombieCounter {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    color: white;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+
+#zombieIcon {
+    width: 40px;
+    height: auto;
+    margin-right: 10px;
+}
+
+#moneyCount {
+    margin-left: 20px;
+}
+
+#gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    color: white;
+    text-align: center;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+#retryButton, #nextButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+}
+#continueButton {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 5;
+}
+#pauseMenu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: white;
+    text-align: center;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#pauseMenu button {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#zombieCounter {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#zombieCounter div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#zombieCounter img {
+    width: 55px;
+    height: auto;
+    margin-right: 10px;
+}
+#shopMenu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: white;
+    text-align: center;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#shopMenu button {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#shopMessage {
+    color: white;
+    margin-top: 10px;
+}
