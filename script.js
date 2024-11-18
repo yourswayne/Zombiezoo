@@ -90,6 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let slowZombieBaseHealth;
     let slowZombieBaseDamage
 
+    let normalSpawnInterval;
+    let fastSpawnInterval;
+    let slowSpawnInterval
+
     let totalZombies;
     let totalFastZombies;
     let totalSlowZombies;
@@ -412,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalSlowZombies = 6;
                 slowZombieBaseHealth = 40;
                 slowZombieBaseDamage = 30;
-                setZombieSpawnInterval(1000, 1000);
+                setZombieSpawnInterval(4000, 10000);
                 break;
             case 2:
                 totalZombies = 15;
@@ -504,26 +508,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setZombieSpawnInterval(normalMin, normalMax, fastMin = normalMin, fastMax = normalMax, slowMin = normalMin, slowMax = normalMax) {
-        // Lösche vorheriges Intervall, wenn es noch existiert
-        clearInterval(spawnInterval);
-        
-        spawnInterval = setInterval(() => {
-            if (spawnedZombies < totalZombies + totalFastZombies + totalSlowZombies && !isPaused && !inShop) {
-                if (spawnedZombies < totalZombies) {
-                    // Normale Zombies: Verwende normalMin und normalMax
-                    spawnZombie('normal', Math.random() * (normalMax - normalMin) + normalMin);
-                } else if (spawnedZombies < totalZombies + totalFastZombies) {
-                    // Schnelle Zombies: Verwende fastMin und fastMax
-                    spawnZombie('fast', Math.random() * (fastMax - fastMin) + fastMin);
-                } else {
-                    // Langsame Zombies: Verwende slowMin und slowMax
-                    spawnZombie('slow', Math.random() * (slowMax - slowMin) + slowMin);
-                }
+        // Lösche vorherige Intervalle, wenn sie existieren
+        clearInterval(normalSpawnInterval);
+        clearInterval(fastSpawnInterval);
+        clearInterval(slowSpawnInterval);
+    
+        // Normale Zombies spawnen
+        let normalSpawned = 0;
+        normalSpawnInterval = setInterval(() => {
+            if (normalSpawned < totalZombies && !isPaused && !inShop) {
+                spawnZombie('normal', Math.random() * (normalMax - normalMin) + normalMin);
+                normalSpawned++;
             } else {
-                clearInterval(spawnInterval); // Stoppe das Intervall, wenn alle Zombies gespawnt sind
+                clearInterval(normalSpawnInterval); // Stoppe, wenn alle normalen Zombies gespawnt sind
             }
-        }, Math.random() * (slowMax - slowMin) + slowMin); // Verwendet aktuell slowMin/slowMax für das Hauptintervall
+        }, Math.random() * (normalMax - normalMin) + normalMin);
+    
+        // Schnelle Zombies spawnen
+        let fastSpawned = 0;
+        fastSpawnInterval = setInterval(() => {
+            if (fastSpawned < totalFastZombies && !isPaused && !inShop) {
+                spawnZombie('fast', Math.random() * (fastMax - fastMin) + fastMin);
+                fastSpawned++;
+            } else {
+                clearInterval(fastSpawnInterval); // Stoppe, wenn alle schnellen Zombies gespawnt sind
+            }
+        }, Math.random() * (fastMax - fastMin) + fastMin);
+    
+        // Langsame Zombies spawnen
+        let slowSpawned = 0;
+        slowSpawnInterval = setInterval(() => {
+            if (slowSpawned < totalSlowZombies && !isPaused && !inShop) {
+                spawnZombie('slow', Math.random() * (slowMax - slowMin) + slowMin);
+                slowSpawned++;
+            } else {
+                clearInterval(slowSpawnInterval); // Stoppe, wenn alle langsamen Zombies gespawnt sind
+            }
+        }, Math.random() * (slowMax - slowMin) + slowMin);
     }
+    
     
 
     function update() {
@@ -635,9 +658,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleShop();
     });
 
-    function startZombieSpawning() {
-        setZombieSpawnInterval();
-    }
 
     function updateMoneyDisplay() {
         moneyCountSpan.innerText = `$${totalMoney}`;
