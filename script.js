@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const zombieCounter = document.getElementById('zombieCounter');
     const zombieCountSpan = document.getElementById('zombieCount');
     const fastZombieCountSpan = document.getElementById('fastZombieCount');
+    const slowZombieCountSpan = document.getElementById('slowZombieCount');
+
     const moneyCountSpan = document.getElementById('moneyCount');
     const gameOverText = document.getElementById('gameOverText');
     const pauseMenu = document.getElementById('pauseMenu');
@@ -28,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isPaused = false;
     let inShop = false;
-    let shotCooldown = 250;
+    let shotCooldown = 750;
     let bulletDamage = 5;
     let bulletSpeed = 11;
     let knockbackDistance = 0;
@@ -55,6 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const fastZombieImage = new Image();
     fastZombieImage.src = 'images/zombie-y.png';
 
+    const slowZombieImage = new Image();
+    slowZombieImage.src = 'images/zombie-o.png';
+
+
+
     const player = {
         x: canvas.width / 2,
         y: canvas.height / 2,
@@ -69,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const zombies = [];
     const keys = {};
     let lastShotTime = 0;
-    const damagePerHit = 5;
     const damageInterval = 1000;
     let lastDamageTime = 0;
     let gameRunning = true;
@@ -81,11 +87,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let zombieBaseDamage;
     let fastZombieBaseHealth;
     let fastZombieBaseDamage;
+    let slowZombieBaseHealth;
+    let slowZombieBaseDamage
 
     let totalZombies;
     let totalFastZombies;
+    let totalSlowZombies;
     let remainingZombies;
     let remainingFastZombies;
+    let remainingSlowZombies;
     let spawnedZombies = 0;
     let spawnInterval;
 
@@ -140,13 +150,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (zombie.hit) {
             ctx.globalAlpha = 0.5;
         }
-        ctx.drawImage(zombie.type === 'fast' ? fastZombieImage : zombieImage, -zombie.width / 2, -zombie.height / 2, zombie.width, zombie.height);
+        if (zombie.type === 'fast') {
+            ctx.drawImage(fastZombieImage, -zombie.width / 2, -zombie.height / 2, zombie.width, zombie.height);
+        } else if (zombie.type === 'slow') {
+            ctx.drawImage(slowZombieImage, -zombie.width / 2, -zombie.height / 2, zombie.width, zombie.height);
+        } else {
+            ctx.drawImage(zombieImage, -zombie.width / 2, -zombie.height / 2, zombie.width, zombie.height);
+        }
+    
         ctx.restore();
         ctx.globalAlpha = 1.0;
     }
 
     function spawnZombie(type) {
-        if (spawnedZombies >= totalZombies + totalFastZombies || isPaused || inShop) return;
+        if (spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies|| isPaused || inShop) return;
 
         const edge = Math.floor(Math.random() * 4);
         let x, y;
@@ -163,12 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
             y: y,
             width: 120,
             height: 90,
-            speed: type === 'fast' ? 4 : 2,
+            speed: type === 'fast' ? 4 : (type === 'slow' ? 1 : 2),
             angle: 0,
-            lives: type === 'fast' ? fastZombieBaseHealth : zombieBaseHealth, // Unterscheidet zwischen normal und fast
+            lives: type === 'fast' ? fastZombieBaseHealth : (type === 'slow' ? slowZombieBaseHealth : zombieBaseHealth),
             type: type,
-            damage: type === 'fast' ? fastZombieBaseDamage : zombieBaseDamage, // Unterscheidet zwischen normal und fast
-            hit: false
+            damage: type === 'fast' ? fastZombieBaseDamage : (type === 'slow' ? slowZombieBaseDamage : zombieBaseDamage),
+            hit: false,
+            lastDamageTime: 0 // Neue Eigenschaft
         };
         zombies.push(zombie);
         spawnedZombies++;
@@ -195,7 +213,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     bullets.splice(bulletIndex, 1);
                     if (zombie.lives <= 0) {
                         zombies.splice(index, 1);
-                        if (zombie.type === 'fast') {
+                        if (zombie.type === 'slow') {
+                            remainingSlowZombies--;
+                            slowZombieCountSpan.innerText = remainingSlowZombies;
+                        }
+                        else if (zombie.type === 'fast') {
                             remainingFastZombies--;
                             fastZombieCountSpan.innerText = remainingFastZombies;
                         } else {
@@ -206,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         roundMoney += earnedMoney;
                         totalMoney += earnedMoney;
                         updateMoneyDisplay();
-                        if (remainingZombies === 0 && remainingFastZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies) {
+                        if (remainingZombies === 0 && remainingFastZombies === 0 && remainingSlowZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies) {
                             gameWon();
                         }
                     }
@@ -216,9 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const now = Date.now();
             const playerDist = Math.hypot(player.x - zombie.x, player.y - zombie.y);
             if (playerDist < player.width / 2 + zombie.width / 2) {
-                if (now - lastDamageTime > damageInterval) {
-                    player.health -= damagePerHit;
-                    lastDamageTime = now;
+                if (!zombie.lastDamageTime || now - zombie.lastDamageTime > damageInterval) {
+                    player.health -= zombie.damage; // Nimm den Schaden des spezifischen Zombies
+                    zombie.lastDamageTime = now; // Speichere den letzten Schaden-Zeitstempel pro Zombie
                     if (player.health <= 0) {
                         gameOver();
                     }
@@ -269,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             pauseMenu.style.display = 'none';
             overlayDiv.style.display = 'none';
-            startZombieSpawning();
+            setLevelDetails();
             update();
         }
     }
@@ -283,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             shopMenu.style.display = 'none';
             overlayDiv.style.display = 'none';
-            startZombieSpawning();
+            setLevelDetails();
             update();
         }
     }
@@ -330,16 +352,18 @@ document.addEventListener('DOMContentLoaded', () => {
         zombies.length = 0;
         remainingZombies = totalZombies;
         remainingFastZombies = totalFastZombies;
+        remainingSlowZombies = totalSlowZombies;
         spawnedZombies = 0;
         moneyCountSpan.innerText = `$${totalMoney}`;
         zombieCountSpan.innerText = remainingZombies;
         fastZombieCountSpan.innerText = remainingFastZombies;
+        slowZombieCountSpan.innerText = remainingSlowZombies;
         overlayDiv.style.display = 'none';
         gameOverDiv.style.display = 'none';
         pauseMenu.style.display = 'none';
         shopMenu.style.display = 'none';
         zombieCounter.style.display = 'block';
-        startZombieSpawning();
+        setLevelDetails();
         update();
     }
 
@@ -377,64 +401,130 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (currentLevel) {
             case 1:
-                totalZombies = 10;
-                totalFastZombies = 0;
-                setZombieSpawnInterval(10000, 80000);
+                totalZombies = 20;
+                zombieBaseHealth = 20;
+                zombieBaseDamage = 10;
+
+                totalFastZombies = 13;
+                fastZombieBaseHealth = 15;
+                fastZombieBaseDamage = 5;
+
+                totalSlowZombies = 6;
+                slowZombieBaseHealth = 40;
+                slowZombieBaseDamage = 30;
+                setZombieSpawnInterval(1000, 1000);
                 break;
             case 2:
                 totalZombies = 15;
+                zombieBaseHealth = 25;
+                zombieBaseDamage = 10;
+
                 totalFastZombies = 0;
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000);
                 break;
             case 3:
-                totalZombies = 5;
+                totalZombies = 15;
+                zombieBaseHealth = 25;
+                zombieBaseDamage = 10
+
                 totalFastZombies = 5;
+                fastZombieBaseHealth = 15;
+                fastZombieBaseDamage = 5;
+
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000, 5000, 8000);
                 break;
             case 4:
-                totalZombies = 5;
-                totalFastZombies = 5;
+                totalZombies = 25;
+                zombieBaseHealth = 35;
+                zombieBaseDamage = 15;
+
+                totalFastZombies = 10;
+                fastZombieBaseHealth = 20;
+                fastZombieBaseDamage = 5;
+
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000, 5000, 8000);
                 break;
             case 5:
-                totalZombies = 5;
-                totalFastZombies = 5;
+                totalZombies = 25;
+                zombieBaseHealth = 45;
+                zombieBaseDamage = 15;
+
+                totalFastZombies = 15;
+                fastZombieBaseHealth = 25;
+                fastZombieBaseDamage = 10;
+
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000, 5000, 8000);
                 break;
             case 6:
-                totalZombies = 5;
-                totalFastZombies = 5;
+                totalZombies = 35;
+                zombieBaseHealth = 55;
+                zombieBaseDamage = 15;
+
+                totalFastZombies = 25;
+                fastZombieBaseHealth = 25;
+                fastZombieBaseDamage = 10;
+
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000, 5000, 8000);
                 break;
             case 7:
-                totalZombies = 52;
+                totalZombies = 25;
+                zombieBaseHealth = 65;
+                zombieBaseDamage = 15
+
                 totalFastZombies = 5;
+                fastZombieBaseHealth = 25;
+                fastZombieBaseDamage = 15;
+
+                totalSlowZombies = 0;
                 setZombieSpawnInterval(5000, 8000, 1500, 3000);
                 break;
             case 8:
-                totalZombies = 5;
+                totalZombies = 45;
+                zombieBaseHealth = 75;
+                zombieBaseDamage = 20;
+
                 totalFastZombies = 5;
+                fastZombieBaseHealth = 30;
+                fastZombieBaseDamage = 15;
+
+                totalSlowZombies = 5;
+                slowZombieBaseHealth = 40;
+                slowZombieBaseDamage = 30;
                 setZombieSpawnInterval(5000, 8000, 1000, 2000);
                 break;
         }
         remainingZombies = totalZombies;
         remainingFastZombies = totalFastZombies;
+        remainingSlowZombies = totalSlowZombies;
     }
 
-    function setZombieSpawnInterval(normalMin, normalMax, fastMin = normalMin, fastMax = normalMax) {
+    function setZombieSpawnInterval(normalMin, normalMax, fastMin = normalMin, fastMax = normalMax, slowMin = normalMin, slowMax = normalMax) {
+        // Lösche vorheriges Intervall, wenn es noch existiert
         clearInterval(spawnInterval);
+        
         spawnInterval = setInterval(() => {
-            if (spawnedZombies < totalZombies + totalFastZombies && !isPaused && !inShop) {
+            if (spawnedZombies < totalZombies + totalFastZombies + totalSlowZombies && !isPaused && !inShop) {
                 if (spawnedZombies < totalZombies) {
-                    spawnZombie('normal');
+                    // Normale Zombies: Verwende normalMin und normalMax
+                    spawnZombie('normal', Math.random() * (normalMax - normalMin) + normalMin);
+                } else if (spawnedZombies < totalZombies + totalFastZombies) {
+                    // Schnelle Zombies: Verwende fastMin und fastMax
+                    spawnZombie('fast', Math.random() * (fastMax - fastMin) + fastMin);
                 } else {
-                    spawnZombie('fast');
+                    // Langsame Zombies: Verwende slowMin und slowMax
+                    spawnZombie('slow', Math.random() * (slowMax - slowMin) + slowMin);
                 }
             } else {
-                clearInterval(spawnInterval);
+                clearInterval(spawnInterval); // Stoppe das Intervall, wenn alle Zombies gespawnt sind
             }
-        }, Math.random() * (fastMax - fastMin) + fastMin);
+        }, Math.random() * (slowMax - slowMin) + slowMin); // Verwendet aktuell slowMin/slowMax für das Hauptintervall
     }
+    
 
     function update() {
         if (!gameRunning || isPaused || inShop) return;
@@ -546,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function startZombieSpawning() {
-        setZombieSpawnInterval(1000, 2000);
+        setZombieSpawnInterval();
     }
 
     function updateMoneyDisplay() {
