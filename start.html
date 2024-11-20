@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startseite</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #startButton {
+            padding: 20px 40px;
+            font-size: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Willkommen beim Zombie-Spiel!</h1>
+        <button id="startButton">Spiel starten</button>
+    </div>
+
+    <script>
+        // Button-Klick: Zur Spielseite navigieren
+        document.getElementById("startButton").addEventListener("click", () => {
+            window.location.href = "index.html"; // Weiterleitung zur Spielseite
+        });
+    </script>
+</body>
+</html>
