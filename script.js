@@ -28,14 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedLevelDisplay = document.getElementById('speedLevel');
     const knockbackLevelDisplay = document.getElementById('knockbackLevel');
 
+    const healthLevelDisplay = document.getElementById('healthLevel');
+    const increaseHealthButton = document.getElementById('increaseHealth');
+
     let isPaused = false;
     let inShop = false;
     let shotCooldown = 750;
     let bulletDamage = 5;
     let bulletSpeed = 11;
     let knockbackDistance = 0;
-    let upgradeLevels = { rate: 1, damage: 1, speed: 1, knockback: 0 };
-    let upgradePrices = { rate: 50, damage: 100, speed: 50, knockback: 75 };
+    let upgradeLevels = { rate: 1, damage: 1, speed: 1, knockback: 0, health: 1 };
+    let upgradePrices = { rate: 50, damage: 100, speed: 50, knockback: 75, health: 110 };
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -69,7 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
         height: 90,
         speed: 5,
         angle: 0,
-        health: 100
+        health: 100,
+        maxHealth: 100 // Standardwert für maximale Lebenspunkte
     };
 
     const bullets = [];
@@ -77,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const keys = {};
     let lastShotTime = 0;
     const damageInterval = 1000;
-    let lastDamageTime = 0;
     let gameRunning = true;
 
     let currentLevel = 1;
@@ -161,13 +164,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             ctx.drawImage(zombieImage, -zombie.width / 2, -zombie.height / 2, zombie.width, zombie.height);
         }
-    
+
         ctx.restore();
         ctx.globalAlpha = 1.0;
     }
 
     function spawnZombie(type) {
-        if (spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies|| isPaused || inShop) return;
+        if (spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies || isPaused || inShop) return;
 
         const edge = Math.floor(Math.random() * 4);
         let x, y;
@@ -190,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             type: type,
             damage: type === 'fast' ? fastZombieBaseDamage : (type === 'slow' ? slowZombieBaseDamage : zombieBaseDamage),
             hit: false,
-            lastDamageTime: 0 // Neue Eigenschaft
+            lastDamageTime: 0, // Neue Eigenschaft
         };
         zombies.push(zombie);
         spawnedZombies++;
@@ -232,24 +235,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         roundMoney += earnedMoney;
                         totalMoney += earnedMoney;
                         updateMoneyDisplay();
-                        if (remainingZombies === 0 && remainingFastZombies === 0 && remainingSlowZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies) {
+                        if (remainingZombies <= 0 && remainingFastZombies <= 0 && remainingSlowZombies <= 0 && spawnedZombies >= totalZombies + totalFastZombies + totalSlowZombies) {
                             gameWon();
                         }
                     }
                 }
             });
 
+            const hitboxScalePlayer = 0.8; // Skalierung der Spieler-Hitbox (z. B. 80% der tatsächlichen Breite)
+            const hitboxScaleZombie = 0.7; // Skalierung der Zombie-Hitbox (z. B. 70% der tatsächlichen Breite)
+
             const now = Date.now();
             const playerDist = Math.hypot(player.x - zombie.x, player.y - zombie.y);
-            if (playerDist < player.width / 2 + zombie.width / 2) {
+
+            // Berechne die effektive Hitbox-Radien
+            const playerHitboxRadius = (player.width / 2) * hitboxScalePlayer;
+            const zombieHitboxRadius = (zombie.width / 2) * hitboxScaleZombie;
+
+            if (playerDist < playerHitboxRadius + zombieHitboxRadius) {
                 if (!zombie.lastDamageTime || now - zombie.lastDamageTime > damageInterval) {
-                    player.health -= zombie.damage; // Nimm den Schaden des spezifischen Zombies
+                    player.health -= zombie.damage; // Reduziere Gesundheit basierend auf dem Zombie-Schaden
+                    if (player.health < 0) {
+                        player.health = 0; // Sicherstellen, dass die Gesundheit nicht negativ wird
+                    }
                     zombie.lastDamageTime = now; // Speichere den letzten Schaden-Zeitstempel pro Zombie
                     if (player.health <= 0) {
-                        gameOver();
+                        gameOver(); // Spiel endet, wenn die Gesundheit null erreicht
                     }
                 }
             }
+
+
         });
     }
 
@@ -279,12 +295,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const healthBarHeight = 20;
         const x = 20;
         const y = canvas.height - healthBarHeight - 20;
+
+        // Zeichne die Hintergrundanzeige (maximale Gesundheit)
         ctx.fillStyle = 'red';
         ctx.fillRect(x, y, healthBarWidth, healthBarHeight);
-        const currentHealthWidth = (player.health / 100) * healthBarWidth;
+
+        // Zeichne die aktuelle Gesundheit basierend auf der prozentualen Relation
+        const currentHealthWidth = (player.health / player.maxHealth) * healthBarWidth;
         ctx.fillStyle = 'green';
         ctx.fillRect(x, y, currentHealthWidth, healthBarHeight);
+
+        // Optional: Textanzeige für die Gesundheit
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.fillText(`${player.health}/${player.maxHealth} HP`, x + healthBarWidth / 2 - 30, y + healthBarHeight - 5);
     }
+
 
     function togglePause() {
         isPaused = !isPaused;
@@ -319,11 +345,19 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverText.innerText = 'Game Over';
         overlayDiv.style.display = 'block';
         gameOverDiv.style.display = 'flex';
+    
+        // Geld zurücksetzen
+        totalMoney = savedMoney; // Geldstand auf gespeicherten Wert zurücksetzen
+        moneyCountSpan.innerText = `$${totalMoney}`;
+    
+        // Intervalle stoppen
         clearInterval(spawnInterval);
         clearInterval(shootInterval);
-        roundMoney = 0;
+    
+        roundMoney = 0; // Rundengeld zurücksetzen
         updateMoneyDisplay();
     }
+    
 
     function gameWon() {
         gameRunning = false;
@@ -332,44 +366,58 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverDiv.style.display = 'flex';
         clearInterval(spawnInterval);
         clearInterval(shootInterval);
+        // Schaltflächen einstellen
+        retryButton.style.display = 'inline-block'; // "Wiederholen" bleibt
+        nextButton.style.display = currentLevel === 8 ? 'none' : 'inline-block'; // Nur zeigen, wenn nicht letztes Level
+
         if (currentLevel === 8) {
-            nextButton.style.display = 'none';
             totalMoney = 0;
             localStorage.setItem('totalMoney', totalMoney);
         } else {
-            nextButton.style.display = 'inline-block';
             totalMoney += roundMoney;
             localStorage.setItem('totalMoney', totalMoney);
         }
+
         roundMoney = 0;
         updateMoneyDisplay();
     }
 
-    function resetGame() {
-        gameRunning = true;
-        isPaused = false;
-        inShop = false;
-        player.x = canvas.width / 2;
-        player.y = canvas.height / 2;
-        player.health = 100;
-        bullets.length = 0;
-        zombies.length = 0;
-        remainingZombies = totalZombies;
-        remainingFastZombies = totalFastZombies;
-        remainingSlowZombies = totalSlowZombies;
-        spawnedZombies = 0;
-        moneyCountSpan.innerText = `$${totalMoney}`;
-        zombieCountSpan.innerText = remainingZombies;
-        fastZombieCountSpan.innerText = remainingFastZombies;
-        slowZombieCountSpan.innerText = remainingSlowZombies;
-        overlayDiv.style.display = 'none';
-        gameOverDiv.style.display = 'none';
-        pauseMenu.style.display = 'none';
-        shopMenu.style.display = 'none';
-        zombieCounter.style.display = 'block';
-        setLevelDetails();
-        update();
-    }
+function resetGame() {
+    gameRunning = true;
+    isPaused = false;
+    inShop = false;
+
+    // Spieler- und Spielstatus zurücksetzen
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.health = 100;
+    bullets.length = 0;
+    zombies.length = 0;
+    remainingZombies = totalZombies;
+    remainingFastZombies = totalFastZombies;
+    remainingSlowZombies = totalSlowZombies;
+    spawnedZombies = 0;
+
+    // Geldstand speichern
+    savedMoney = totalMoney; // Geldstand für Wiederherstellung speichern
+
+    // UI aktualisieren
+    moneyCountSpan.innerText = `$${totalMoney}`;
+    zombieCountSpan.innerText = remainingZombies;
+    fastZombieCountSpan.innerText = remainingFastZombies;
+    slowZombieCountSpan.innerText = remainingSlowZombies;
+
+    // Menüs schließen
+    overlayDiv.style.display = 'none';
+    gameOverDiv.style.display = 'none';
+    pauseMenu.style.display = 'none';
+    shopMenu.style.display = 'none';
+    zombieCounter.style.display = 'block';
+
+    setLevelDetails();
+    update();
+}
+
 
     function resetAll() {
         currentLevel = 1;
@@ -405,18 +453,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (currentLevel) {
             case 1:
-                totalZombies = 20;
+                totalZombies = 10;
                 zombieBaseHealth = 20;
                 zombieBaseDamage = 10;
 
-                totalFastZombies = 13;
-                fastZombieBaseHealth = 15;
-                fastZombieBaseDamage = 5;
+                totalFastZombies = 0;
 
-                totalSlowZombies = 6;
-                slowZombieBaseHealth = 40;
-                slowZombieBaseDamage = 30;
-                setZombieSpawnInterval(4000, 10000);
+                totalSlowZombies = 0;
+                setZombieSpawnInterval(4000, 6000, 0, 0, 0, 0);
                 break;
             case 2:
                 totalZombies = 15;
@@ -507,12 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
         remainingSlowZombies = totalSlowZombies;
     }
 
-    function setZombieSpawnInterval(normalMin, normalMax, fastMin = normalMin, fastMax = normalMax, slowMin = normalMin, slowMax = normalMax) {
+    function setZombieSpawnInterval(normalMin, normalMax, fastMin, fastMax, slowMin, slowMax) {
         // Lösche vorherige Intervalle, wenn sie existieren
         clearInterval(normalSpawnInterval);
         clearInterval(fastSpawnInterval);
         clearInterval(slowSpawnInterval);
-    
+
         // Normale Zombies spawnen
         let normalSpawned = 0;
         normalSpawnInterval = setInterval(() => {
@@ -523,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(normalSpawnInterval); // Stoppe, wenn alle normalen Zombies gespawnt sind
             }
         }, Math.random() * (normalMax - normalMin) + normalMin);
-    
+
         // Schnelle Zombies spawnen
         let fastSpawned = 0;
         fastSpawnInterval = setInterval(() => {
@@ -534,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(fastSpawnInterval); // Stoppe, wenn alle schnellen Zombies gespawnt sind
             }
         }, Math.random() * (fastMax - fastMin) + fastMin);
-    
+
         // Langsame Zombies spawnen
         let slowSpawned = 0;
         slowSpawnInterval = setInterval(() => {
@@ -546,8 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, Math.random() * (slowMax - slowMin) + slowMin);
     }
-    
-    
+
+
 
     function update() {
         if (!gameRunning || isPaused || inShop) return;
@@ -652,6 +696,22 @@ document.addEventListener('DOMContentLoaded', () => {
             shopMessage.innerText = 'Nicht genug Geld';
         }
     });
+    increaseHealthButton.addEventListener('click', () => {
+        if (totalMoney >= upgradePrices.health) {
+            totalMoney -= upgradePrices.health;
+            player.maxHealth += 20; // Erhöhe die maximale Gesundheit
+            player.health = player.maxHealth; // Setze aktuelle Gesundheit auf Maximum
+            upgradeLevels.health++;
+            upgradePrices.health += 50; // Preis für das Upgrade erhöhen
+            updateShopDisplays();
+            updateMoneyDisplay();
+            updateUpgradeDisplays();
+        } else {
+            shopMessage.innerText = 'Nicht genug Geld';
+        }
+    });
+
+
 
     closeShopButton.addEventListener('click', () => {
         shopMessage.innerText = '';
@@ -668,6 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
         damageLevelDisplay.innerText = `Level: ${upgradeLevels.damage}`;
         speedLevelDisplay.innerText = `Level: ${upgradeLevels.speed}`;
         knockbackLevelDisplay.innerText = `Level: ${upgradeLevels.knockback}`;
+        healthLevelDisplay.innerText = `Level: ${upgradeLevels.health}`; // Neues Update
     }
 
     function updateShopDisplays() {
@@ -675,7 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
         increaseDamageButton.innerText = `Kugelschaden erhöhen - $${upgradePrices.damage}`;
         increaseBulletSpeedButton.innerText = `Kugelgeschwindigkeit erhöhen - $${upgradePrices.speed}`;
         enableKnockbackButton.innerText = `Rückstoß aktivieren - $${upgradePrices.knockback}`;
+        increaseHealthButton.innerText = `Spielerleben erhöhen - $${upgradePrices.health}`; // Neues Update
     }
+
 
     startLevel();
 });
