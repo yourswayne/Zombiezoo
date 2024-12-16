@@ -209,6 +209,38 @@ function drawDamageIndicators() {
     });
 }
 
+    // Beispiel für das Zombie-Töten und Explosion
+    function zombieDefeated(zombie) {
+        // Position des Zombies berechnen
+        const zombieX = zombie.x;
+        const zombieY = zombie.y;
+    
+        // Explosionselement finden
+        const explosion = document.getElementById('explosion');
+        const explosionImage = document.getElementById('explosionImage');
+    
+        // Setze die Position der Explosion auf die des Zombies
+        explosion.style.left = zombieX + 'px';
+        explosion.style.top = zombieY + 'px';
+        explosion.style.display = 'block'; // Explosion anzeigen
+    
+        // Wenn du ein GIF verwendest, wird die Animation automatisch abgespielt.
+        // Wenn du ein Video verwenden möchtest, kannst du es hier abspielen:
+        // explosionImage.play();
+    
+        // Explosion nach 1 Sekunde (je nach GIF oder Video-Dauer) wieder ausblenden
+        setTimeout(function() {
+            explosion.style.display = 'none';
+        }, 1000); // Anpassung der Zeit je nach Dauer der Explosion
+        // Beispiel, wie die Funktion beim Tod eines Zombies aufgerufen werden könnte
+            if (zombieHealth <= 0) {
+                showExplosion(zombie); // Explosion wird angezeigt
+                // Weitere Logik für den Tod des Zombies
+            }
+
+    }
+    
+
 function updateZombies() {
     zombies.forEach((zombie, index) => {
         const dx = player.x - zombie.x;
