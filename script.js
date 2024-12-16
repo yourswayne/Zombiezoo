@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     let shootInterval;
-    let totalMoney = 0;
+    let totalMoney = 100000000;
     let roundMoney = 0;
 
     if (localStorage.getItem('totalMoney')) {
@@ -183,63 +183,88 @@ function addDamageIndicator(x, y, damage) {
         y: y,
         damage: damage,
         opacity: 1, // Anfangs volle Sichtbarkeit
-        lifespan: 30 // Frames, die der Indikator sichtbar bleibt
+        lifespan: 100 // Frames, die der Indikator sichtbar bleibt
     });
 }
 
-    function updateZombies() {
-        zombies.forEach((zombie, index) => {
-            const dx = player.x - zombie.x;
-            const dy = player.y - zombie.y;
-            zombie.angle = Math.atan2(dy, dx);
-            zombie.x += Math.cos(zombie.angle) * zombie.speed;
-            zombie.y += Math.sin(zombie.angle) * zombie.speed;
+function drawDamageIndicators() {
+    damageIndicators.forEach((indicator, index) => {
+        ctx.save();
+        ctx.globalAlpha = indicator.opacity; // Setzt die Transparenz basierend auf der verbleibenden Lebensdauer
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'red';
+        ctx.textAlign = 'center';
+        ctx.fillText(`-${indicator.damage}`, indicator.x, indicator.y);
+        ctx.restore();
 
-            bullets.forEach((bullet, bulletIndex) => {
-                const dist = Math.hypot(bullet.x - zombie.x, bullet.y - zombie.y);
-                if (dist < zombie.width / 2 + bullet.width / 2) {
-                    zombie.lives -= bullet.damage;
-                    zombie.hit = true;
-                    if (knockbackDistance > 0) {
-                        zombie.x -= knockbackDistance * Math.cos(zombie.angle);
-                        zombie.y -= knockbackDistance * Math.sin(zombie.angle);
-                    }
-                    setTimeout(() => zombie.hit = false, 100);
-                    bullets.splice(bulletIndex, 1);
-                    if (zombie.lives <= 0) {
-                        zombies.splice(index, 1);
-                        if (zombie.type === 'fast') {
-                            remainingFastZombies--;
-                            fastZombieCountSpan.innerText = remainingFastZombies;
-                        } else {
-                            remainingZombies--;
-                            zombieCountSpan.innerText = remainingZombies;
-                        }
-                        const earnedMoney = Math.floor(Math.random() * 6) + 5;
-                        roundMoney += earnedMoney;
-                        totalMoney += earnedMoney;
-                        updateMoneyDisplay();
-                        if (remainingZombies === 0 && remainingFastZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies) {
-                            gameWon();
-                        }
-                    }
+        // Aktualisiert die Position und Sichtbarkeit
+        indicator.y -= 1; // Bewegt den Indikator nach oben
+        indicator.opacity -= 0.03; // Reduziert die Sichtbarkeit
+        indicator.lifespan--;
+
+        // Entfernt den Indikator, wenn er abgelaufen ist
+        if (indicator.lifespan <= 0) {
+            damageIndicators.splice(index, 1);
+        }
+    });
+}
+
+function updateZombies() {
+    zombies.forEach((zombie, index) => {
+        const dx = player.x - zombie.x;
+        const dy = player.y - zombie.y;
+        zombie.angle = Math.atan2(dy, dx);
+        zombie.x += Math.cos(zombie.angle) * zombie.speed;
+        zombie.y += Math.sin(zombie.angle) * zombie.speed;
+
+        bullets.forEach((bullet, bulletIndex) => {
+            const dist = Math.hypot(bullet.x - zombie.x, bullet.y - zombie.y);
+            if (dist < zombie.width / 2 + bullet.width / 2) {
+                zombie.lives -= bullet.damage;
+                zombie.hit = true;
+                
+                // Schadensindikator hinzufügen
+                addDamageIndicator(zombie.x, zombie.y, bullet.damage);
+
+                if (knockbackDistance > 0) {
+                    zombie.x -= knockbackDistance * Math.cos(zombie.angle);
+                    zombie.y -= knockbackDistance * Math.sin(zombie.angle);
                 }
-            });
-
-            const now = Date.now();
-            const playerDist = Math.hypot(player.x - zombie.x, player.y - zombie.y);
-            if (playerDist < player.width / 2 + zombie.width / 2) {
-                if (now - lastDamageTime > damageInterval) {
-                    player.health -= damagePerHit;
-                    lastDamageTime = now;
-                    if (player.health <= 0) {
-                        gameOver();
+                setTimeout(() => zombie.hit = false, 100);
+                bullets.splice(bulletIndex, 1);
+                if (zombie.lives <= 0) {
+                    zombies.splice(index, 1);
+                    if (zombie.type === 'fast') {
+                        remainingFastZombies--;
+                        fastZombieCountSpan.innerText = remainingFastZombies;
+                    } else {
+                        remainingZombies--;
+                        zombieCountSpan.innerText = remainingZombies;
+                    }
+                    const earnedMoney = Math.floor(Math.random() * 6) + 5;
+                    roundMoney += earnedMoney;
+                    totalMoney += earnedMoney;
+                    updateMoneyDisplay();
+                    if (remainingZombies === 0 && remainingFastZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies) {
+                        gameWon();
                     }
                 }
             }
         });
-    }
 
+        const now = Date.now();
+        const playerDist = Math.hypot(player.x - zombie.x, player.y - zombie.y);
+        if (playerDist < player.width / 2 + zombie.width / 2) {
+            if (now - lastDamageTime > damageInterval) {
+                player.health -= damagePerHit;
+                lastDamageTime = now;
+                if (player.health <= 0) {
+                    gameOver();
+                }
+            }
+        }
+    });
+}
     function updateBullets() {
         bullets.forEach((bullet, index) => {
             bullet.x += Math.cos(bullet.angle) * bullet.speed;
@@ -314,23 +339,33 @@ function addDamageIndicator(x, y, damage) {
 
     function gameWon() {
         gameRunning = false;
-        gameOverText.innerText = 'You Won!';
+        // Überprüfen, ob es die zweite Welle ist
+        if (currentLevel === 2) {
+            gameOverText.innerText = 'Game won!';
+        } else {
+            gameOverText.innerText = 'Wave complete!';
+        }
+        
         overlayDiv.style.display = 'block';
         gameOverDiv.style.display = 'flex';
         clearInterval(spawnInterval);
         clearInterval(shootInterval);
-        if (currentLevel === 100000) {
-            nextButton.style.display = 'none';
-            totalMoney = 0;
+    
+        // Wenn Level 2 erreicht ist, setze das Geld auf 0
+        if (currentLevel === 2) {
+            totalMoney == 0;
             localStorage.setItem('totalMoney', totalMoney);
         } else {
             nextButton.style.display = 'inline-block';
             totalMoney += roundMoney;
             localStorage.setItem('totalMoney', totalMoney);
         }
-        roundMoney = 0;
+    
+        // Setze das Geld für die nächste Runde
+        roundMoney = 10000;
         updateMoneyDisplay();
     }
+    
 
     function resetGame() {
         gameRunning = true;
@@ -443,6 +478,7 @@ function addDamageIndicator(x, y, damage) {
         bullets.forEach(drawBullet);
         updateZombies();
         zombies.forEach(drawZombie);
+        drawDamageIndicators(); // Zeichnet Schadensindikatoren
         drawHealthBar();
         requestAnimationFrame(update);
     }
