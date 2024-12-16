@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startseite</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            display: none;
+            margin-bottom: 20px;
+        }
+        form.active {
+            display: block;
+        }
+        input {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .toggle-link {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .toggle-link:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ZombieZoo</h1>
+
+        <!-- Login-Formular -->
+        <form id="loginForm" class="active">
+            <h2>Einloggen</h2>
+            <input type="text" id="loginUsername" placeholder="Benutzername" required>
+            <input type="password" id="loginPassword" placeholder="Passwort" required>
+            <button type="button" id="loginButton">Einloggen</button>
+            <p>Noch kein Konto? <span class="toggle-link" id="showRegister">Registrieren</span></p>
+        </form>
+
+        <!-- Registrierungs-Formular -->
+        <form id="registerForm">
+            <h2>Registrieren</h2>
+            <input type="text" id="registerUsername" placeholder="Benutzername" required>
+            <input type="password" id="registerPassword" placeholder="Passwort" required>
+            <input type="password" id="registerConfirmPassword" placeholder="Passwort bestätigen" required>
+            <button type="button" id="registerButton">Registrieren</button>
+            <p>Bereits ein Konto? <span class="toggle-link" id="showLogin">Einloggen</span></p>
+        </form>
+    </div>
+
+    <script>
+        // Element-Referenzen
+        const loginForm = document.getElementById("loginForm");
+        const registerForm = document.getElementById("registerForm");
+        const showLoginLink = document.getElementById("showLogin");
+        const showRegisterLink = document.getElementById("showRegister");
+
+        // Formularumschaltung
+        showLoginLink.addEventListener("click", () => {
+            loginForm.classList.add("active");
+            registerForm.classList.remove("active");
+        });
+
+        showRegisterLink.addEventListener("click", () => {
+            registerForm.classList.add("active");
+            loginForm.classList.remove("active");
+        });
+
+        // Login-Button
+        document.getElementById("loginButton").addEventListener("click", () => {
+            const username = document.getElementById("loginUsername").value;
+            const password = document.getElementById("loginPassword").value;
+
+            // Beispiel: Senden von Login-Daten an einen Server (Mockup)
+            if (username === "test" && password === "1234") {
+                alert("Login erfolgreich!");
+                window.location.href = "index.html"; // Weiterleitung zur Spielseite
+            } else {
+                alert("Ungültige Anmeldedaten!");
+            }
+        });
+
+        document.getElementById("registerButton").addEventListener("click", async () => {
+    const username = document.getElementById("registerUsername").value;
+    const password = document.getElementById("registerPassword").value;
+    const confirmPassword = document.getElementById("registerConfirmPassword").value;
+
+    if (password !== confirmPassword) {
+        alert("Passwörter stimmen nicht überein!");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+
+        if (response.ok) {
+            alert("Registrierung erfolgreich!");
+            // Automatisch zum Login weiterleiten
+            registerForm.classList.remove("active");
+            loginForm.classList.add("active");
+        } else {
+            const errorData = await response.json();
+            alert(errorData.error || "Fehler bei der Registrierung.");
+        }
+    } catch (error) {
+        console.error("Fehler:", error);
+        alert("Verbindungsfehler. Bitte versuchen Sie es später erneut.");
+    }
+});
+    </script>
+</body>
+</html>

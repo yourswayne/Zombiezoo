@@ -174,6 +174,19 @@ document.addEventListener('DOMContentLoaded', () => {
         spawnedZombies++;
     }
 
+    const damageIndicators = [];
+
+// Funktion zum Hinzufügen eines Schadensindikators
+function addDamageIndicator(x, y, damage) {
+    damageIndicators.push({
+        x: x,
+        y: y,
+        damage: damage,
+        opacity: 1, // Anfangs volle Sichtbarkeit
+        lifespan: 30 // Frames, die der Indikator sichtbar bleibt
+    });
+}
+
     function updateZombies() {
         zombies.forEach((zombie, index) => {
             const dx = player.x - zombie.x;
@@ -306,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverDiv.style.display = 'flex';
         clearInterval(spawnInterval);
         clearInterval(shootInterval);
-        if (currentLevel === 8) {
+        if (currentLevel === 100000) {
             nextButton.style.display = 'none';
             totalMoney = 0;
             localStorage.setItem('totalMoney', totalMoney);
@@ -374,52 +387,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setLevelDetails() {
-
-        switch (currentLevel) {
-            case 1:
-                totalZombies = 10;
-                totalFastZombies = 0;
-                setZombieSpawnInterval(10000, 80000);
-                break;
-            case 2:
-                totalZombies = 15;
-                totalFastZombies = 0;
-                setZombieSpawnInterval(5000, 8000);
-                break;
-            case 3:
-                totalZombies = 5;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 5000, 8000);
-                break;
-            case 4:
-                totalZombies = 5;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 5000, 8000);
-                break;
-            case 5:
-                totalZombies = 5;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 5000, 8000);
-                break;
-            case 6:
-                totalZombies = 5;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 5000, 8000);
-                break;
-            case 7:
-                totalZombies = 52;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 1500, 3000);
-                break;
-            case 8:
-                totalZombies = 5;
-                totalFastZombies = 5;
-                setZombieSpawnInterval(5000, 8000, 1000, 2000);
-                break;
-        }
+        const growthFactor = currentLevel; // Skaliert die Schwierigkeit basierend auf dem Level
+    
+        // Basiswerte
+        const baseZombieHealth = 50; 
+        const baseZombieDamage = 10;
+        const baseZombieSpeed = 2;
+    
+        const baseFastZombieHealth = 30;
+        const baseFastZombieDamage = 15;
+        const baseFastZombieSpeed = 4;
+    
+        // Wachstumslogik
+        zombieBaseHealth = baseZombieHealth + growthFactor * 10; // Zunehmende Gesundheit
+        zombieBaseDamage = baseZombieDamage + growthFactor; // Zunehmender Schaden
+        fastZombieBaseHealth = baseFastZombieHealth + growthFactor * 8; 
+        fastZombieBaseDamage = baseFastZombieDamage + growthFactor;
+    
+        totalZombies = 5 + growthFactor * 3; // Erhöht die Anzahl normaler Zombies
+        totalFastZombies = growthFactor >= 3 ? growthFactor * 2 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
+    
+        setZombieSpawnInterval(
+            Math.max(3000 - growthFactor * 200, 1000), // Schnelleres Spawnen
+            Math.max(7000 - growthFactor * 300, 3000), 
+            Math.max(2000 - growthFactor * 150, 800), 
+            Math.max(5000 - growthFactor * 300, 2000)
+        );
+    
         remainingZombies = totalZombies;
         remainingFastZombies = totalFastZombies;
     }
+    
 
     function setZombieSpawnInterval(normalMin, normalMax, fastMin = normalMin, fastMax = normalMax) {
         clearInterval(spawnInterval);
