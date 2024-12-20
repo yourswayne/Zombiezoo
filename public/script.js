@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalMoney = 0;
     let roundMoney = 0;
 
+
     if (localStorage.getItem('totalMoney')) {
         totalMoney = parseInt(localStorage.getItem('totalMoney'));
     }

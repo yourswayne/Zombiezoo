@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="profileContainer" style="position: absolute; top: 10px; right: 10px;">
+        <img id="profileImage" src="./images/placeholder.png" alt="Profilbild"
+            style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff;">
+    </div>
+
+    <div id="zombieCounter" style="display: none;">
+        <div>
+            <img id="zombieIcon" src="/images/zombie.png" alt="Zombie Icon">
+            <span id="zombieCount"></span>
+        </div>
+        <div>
+            <img id="fastZombieIcon" src="/images/zombie-y.png" alt="Fast Zombie Icon">
+            <span id="fastZombieCount"></span>
+        </div>
+        <div>
+            <img id="slowZombieIcon" src="/images/zombie-o.png" alt="Slow Zombie Icon">
+            <span id="slowZombieCount"></span>
+        </div>
+        <span id="moneyCount"></span>
+    </div>
+    <div id="gameOver" style="display: none;">
+        <span id="gameOverText">Game Over</span>
+        <button id="retryButton">Wiederholen</button>
+        <button id="nextButton" style="display: none;">Weiter</button>
+    </div>
+    <div id="pauseMenu" style="display: none;">
+        <button id="continueButton">Fortsetzen</button>
+        <button id="retryButtonPause">Wiederholen</button>
+        <button id="resetButton">Spiel zurücksetzen</button>
+    </div>
+    <div id="shopMenu" style="display: none;">
+        <h2>Shop</h2>
+        <div>
+            <button id="increaseRate">Feuerrate erhöhen - $50</button>
+            <span id="rateLevel">Level: 1</span>
+        </div>
+        <div>
+            <button id="increaseDamage">Kugelschaden erhöhen - $100</button>
+            <span id="damageLevel">Level: 1</span>
+        </div>
+        <div>
+            <button id="increaseBulletSpeed">Kugelgeschwindigkeit erhöhen - $50</button>
+            <span id="speedLevel">Level: 1</span>
+        </div>
+        <div>
+            <button id="enableKnockbackButton">Rückstoß aktivieren - $75</button>
+            <span id="knockbackLevel">Level: 0</span>
+        </div>
+        <button id="closeShop">Shop schließen</button>
+        <div id="shopMessage" style="color: white; margin-top: 10px;"></div>
+    </div>
+    <div class="overlay" style="display: none;"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="script.js"></script>
+
+    <script>
+        // Profilbild laden und überprüfen
+        async function loadProfileImage() {
+            const token = sessionStorage.getItem('authToken');  // Token aus sessionStorage holen
+
+            // Platzhalter anzeigen, wenn kein Token existiert
+            const profileImageElement = document.getElementById('profileImage');
+            if (!token) {
+                profileImageElement.src = './images/placeholder.png';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/profile-image', {
+                    method: 'GET',
+                    headers: { 'Authorization': token }
+                });
+
+                if (!response.ok) {
+                    // Platzhalter anzeigen, falls ein Fehler auftritt
+                    profileImageElement.src = './images/placeholder.png';
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.profileImage) {
+                    profileImageElement.src = result.profileImage;
+                } else {
+                    profileImageElement.src = './images/placeholder.png';
+                }
+            } catch (error) {
+                console.error('Fehler beim Abrufen des Profilbildes:', error);
+                profileImageElement.src = './images/placeholder.png';
+            }
+        }
+
+        // Event, um das Profilbild zu laden, wenn die Seite geladen wird
+        window.onload = loadProfileImage;
+
+        window.addEventListener('beforeunload', async () => {
+            const token = sessionStorage.getItem('authToken');
+            if (!token) return;
+
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': token }
+                });
+                sessionStorage.removeItem('authToken'); // Token entfernen
+            } catch (err) {
+                console.error('Fehler bei der Abmeldung:', err);
+            }
+        });
+    </script>
+</body>
+
+</html>

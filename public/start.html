@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startseite</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/parsleyjs/dist/parsley.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        #startButton,
+        #loginButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        #startButton:hover,
+        #loginButton:hover {
+            background-color: #0056b3;
+        }
+
+        #authContainer,
+        #registerContainer {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #444;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #authContainer form,
+        #registerContainer form {
+            display: flex;
+            flex-direction: column;
+            margin: 10px 0;
+        }
+
+        #authContainer input,
+        #registerContainer input {
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #authContainer button,
+        #registerContainer button {
+            margin-top: 10px;
+        }
+
+        #backButton {
+            margin-top: 10px;
+            background-color: #555;
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #backButton:hover {
+            background-color: #333;
+        }
+
+        .error {
+            color: red;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mainContainer">
+        <h1>Willkommen beim Zombie-Spiel!</h1>
+        <button id="startButton">Spiel starten</button>
+        <button id="loginButton">Anmelden</button>
+    </div>
+
+    <div id="authContainer">
+        <h2>Anmelden</h2>
+        <form id="authForm" data-parsley-validate>
+            <input type="text" id="username" name="username" placeholder="Benutzername" required>
+            <input type="password" id="password" name="password" placeholder="Passwort" required>
+            <button type="submit">Anmelden</button>
+        </form>
+        <a id="registerLink" href="#">Noch keinen Account? Registrieren</a>
+        <button id="backButton">Zurück</button>
+    </div>
+
+    <div id="registerContainer">
+        <h2>Registrieren</h2>
+        <form id="registerForm" data-parsley-validate>
+            <input type="text" id="registerUsername" name="username" placeholder="Benutzername" required>
+            <input type="email" id="registerEmail" name="email" placeholder="E-Mail" required>
+            <input type="password" id="registerPassword" name="password" placeholder="Passwort" required>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Passwort bestätigen" required>
+            <input type="file" id="profileImage" accept="image/*">
+            <button type="submit">Registrieren</button>
+        </form>
+        <button id="backToLoginButton">Zurück</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/parsleyjs/dist/parsley.min.js"></script>
+    <script>
+        const mainContainer = document.getElementById("mainContainer");
+        const authContainer = document.getElementById("authContainer");
+        const registerContainer = document.getElementById("registerContainer");
+        const loginButton = document.getElementById("loginButton");
+        const backButton = document.getElementById("backButton");
+        const registerLink = document.getElementById("registerLink");
+        const backToLoginButton = document.getElementById("backToLoginButton");
+
+        // Event Listener für die Login-Schaltfläche
+        loginButton.addEventListener("click", () => {
+            mainContainer.style.display = "none";
+            authContainer.style.display = "flex";
+        });
+
+        // Zurück-Schaltfläche im Login-Formular
+        backButton.addEventListener("click", () => {
+            authContainer.style.display = "none";
+            mainContainer.style.display = "flex";
+        });
+
+        // Registrierung-Link
+        registerLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            authContainer.style.display = "none";
+            registerContainer.style.display = "flex";
+        });
+
+        // Zurück-Schaltfläche im Registrierungsformular
+        backToLoginButton.addEventListener("click", () => {
+            registerContainer.style.display = "none";
+            authContainer.style.display = "flex";
+        });
+
+        // Registrierung
+        const registerForm = document.getElementById("registerForm");
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById("registerUsername").value;
+            const email = document.getElementById("registerEmail").value;
+            const password = document.getElementById("registerPassword").value;
+
+            try {
+                const response = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    registerContainer.style.display = "none";
+                    mainContainer.style.display = "flex";
+                } else {
+                    alert(result.message || "Fehler bei der Registrierung.");
+                }
+            } catch (err) {
+                alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+            }
+        });
+
+        // Login
+        const authForm = document.getElementById("authForm");
+        authForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.message);
+                    sessionStorage.setItem('authToken', result.token);
+                    window.location.href = "/game"; // Weiterleitung zur Spielseite
+                } else {
+                    alert(result.message || "Benutzername oder Passwort falsch.");
+                }
+            } catch (err) {
+                alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+            }
+        });
+
+        // Start-Schaltfläche
+        document.getElementById("startButton").addEventListener("click", () => {
+            window.location.href = "/game"; // Weiterleitung zur Spielseite
+        });
+    </script>
+</body>
+
+</html>
