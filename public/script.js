@@ -232,36 +232,26 @@ function drawDamageIndicators() {
     });
 }
 
-    // Beispiel für das Zombie-Töten und Explosion
-    function zombieDefeated(zombie) {
-        // Position des Zombies berechnen
-        const zombieX = zombie.x;
-        const zombieY = zombie.y;
+function zombieDefeated(zombie) {
+    // Explosionen-Container abrufen
+    const explosionContainer = document.getElementById('explosionContainer');
     
-        // Explosionselement finden
-        const explosion = document.getElementById('explosion');
-        const explosionImage = document.getElementById('explosionImage');
-    
-        // Setze die Position der Explosion auf die des Zombies
-        explosion.style.left = zombieX + 'px';
-        explosion.style.top = zombieY + 'px';
-        explosion.style.display = 'block'; // Explosion anzeigen
-    
-        // Wenn du ein GIF verwendest, wird die Animation automatisch abgespielt.
-        // Wenn du ein Video verwenden möchtest, kannst du es hier abspielen:
-        // explosionImage.play();
-    
-        // Explosion nach 1 Sekunde (je nach GIF oder Video-Dauer) wieder ausblenden
-        setTimeout(function() {
-            explosion.style.display = 'none';
-        }, 1000); // Anpassung der Zeit je nach Dauer der Explosion
-        // Beispiel, wie die Funktion beim Tod eines Zombies aufgerufen werden könnte
-            if (zombieHealth <= 0) {
-                showExplosion(zombie); // Explosion wird angezeigt
-                // Weitere Logik für den Tod des Zombies
-            }
+    // Neues Explosionselement erstellen
+    const explosion = document.createElement('div');
+    explosion.classList.add('explosion');
+    explosion.style.left = `${zombie.x - 50}px`; // Zentriere die Explosion auf den Zombie
+    explosion.style.top = `${zombie.y - 50}px`; // Zentriere die Explosion auf den Zombie
+    explosion.style.backgroundImage = 'url("/images/3klP.gif")'; // Link zum GIF
 
-    }
+    // Explosion dem Container hinzufügen
+    explosionContainer.appendChild(explosion);
+
+    // Explosion nach dem Abspielen entfernen (1 Sekunde Dauer als Beispiel)
+    setTimeout(() => {
+        explosionContainer.removeChild(explosion);
+    }, 700); // Dauer des GIFs in Millisekunden
+}
+
     
 
 function updateZombies() {
@@ -287,8 +277,11 @@ function updateZombies() {
                 }
                 setTimeout(() => zombie.hit = false, 100);
                 bullets.splice(bulletIndex, 1);
+
                 if (zombie.lives <= 0) {
+                    zombieDefeated(zombie); // Explosion anzeigen
                     zombies.splice(index, 1);
+
                     if (zombie.type === 'fast') {
                         remainingFastZombies--;
                         fastZombieCountSpan.innerText = remainingFastZombies;
@@ -296,10 +289,12 @@ function updateZombies() {
                         remainingZombies--;
                         zombieCountSpan.innerText = remainingZombies;
                     }
+
                     const earnedMoney = Math.floor(Math.random() * 6) + 5;
                     roundMoney += earnedMoney;
                     totalMoney += earnedMoney;
                     updateMoneyDisplay();
+
                     if (remainingZombies === 0 && remainingFastZombies === 0 && spawnedZombies >= totalZombies + totalFastZombies) {
                         gameWon();
                     }
@@ -504,8 +499,8 @@ function updateZombies() {
         slowZombieBaseDamage = baseSlowZombieDamage + growthFactor;
     
         totalZombies = 5 + growthFactor * 3; // Erhöht die Anzahl normaler Zombies
-        totalFastZombies = growthFactor >= 3 ? growthFactor * 2 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
-        totalSlowZombies = growthFactor >= 5 ? growthFactor * 2 : 0;
+        totalFastZombies = 4+ growthFactor >= 1 ? growthFactor * 4 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
+        totalSlowZombies = growthFactor >= 2 ? growthFactor * 3 : 0;
     
         setZombieSpawnInterval(
             Math.max(3000 - growthFactor * 200, 1000), // Schnelleres Spawnen
