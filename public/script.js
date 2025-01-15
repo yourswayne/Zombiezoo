@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     let shootInterval;
-    let totalMoney = 100000000;
+    let totalMoney = 0;
     let roundMoney = 0;
 
 
@@ -310,9 +310,9 @@ function updateZombies() {
         const now = Date.now();
         const playerDist = Math.hypot(player.x - zombie.x, player.y - zombie.y);
         if (playerDist < player.width / 2 + zombie.width / 2) {
-            if (now - lastDamageTime > damageInterval) {
-                player.health -= damagePerHit;
-                lastDamageTime = now;
+            if (!zombie.lastDamageTime || now - zombie.lastDamageTime > damageInterval) {
+                player.health -= zombie.damage; // Nimm den Schaden des spezifischen Zombies
+                zombie.lastDamageTime = now; // Speichere den letzten Schaden-Zeitstempel pro Zombie
                 if (player.health <= 0) {
                     gameOver();
                 }
@@ -482,22 +482,30 @@ function updateZombies() {
         const growthFactor = currentLevel; // Skaliert die Schwierigkeit basierend auf dem Level
     
         // Basiswerte
-        const baseZombieHealth = 50; 
+        const baseZombieHealth = 10; 
         const baseZombieDamage = 10;
         const baseZombieSpeed = 2;
     
-        const baseFastZombieHealth = 30;
+        const baseFastZombieHealth = 5;
         const baseFastZombieDamage = 15;
         const baseFastZombieSpeed = 4;
+
+        const baseSlowZombieHealth = 20;
+        const baseSlowZombieDamage = 30;
     
         // Wachstumslogik
         zombieBaseHealth = baseZombieHealth + growthFactor * 10; // Zunehmende Gesundheit
         zombieBaseDamage = baseZombieDamage + growthFactor; // Zunehmender Schaden
+
         fastZombieBaseHealth = baseFastZombieHealth + growthFactor * 8; 
         fastZombieBaseDamage = baseFastZombieDamage + growthFactor;
+
+        slowZombieBaseHealth = baseSlowZombieHealth + growthFactor * 4;
+        slowZombieBaseDamage = baseSlowZombieDamage + growthFactor;
     
         totalZombies = 5 + growthFactor * 3; // Erhöht die Anzahl normaler Zombies
         totalFastZombies = growthFactor >= 3 ? growthFactor * 2 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
+        totalSlowZombies = growthFactor >= 5 ? growthFactor * 2 : 0;
     
         setZombieSpawnInterval(
             Math.max(3000 - growthFactor * 200, 1000), // Schnelleres Spawnen
