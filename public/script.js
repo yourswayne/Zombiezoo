@@ -691,5 +691,107 @@ function updateZombies() {
         enableKnockbackButton.innerText = `Rückstoß aktivieren - $${upgradePrices.knockback}`;
     }
 
+    async function saveGameStats() {
+        const gameStats = {
+            money: parseInt(document.getElementById('moneyCount').textContent || '0'),
+            zombies: {
+                total: parseInt(document.getElementById('zombieCount').textContent || '0'),
+                fast: parseInt(document.getElementById('fastZombieCount').textContent || '0'),
+                slow: parseInt(document.getElementById('slowZombieCount').textContent || '0'),
+            },
+            upgrades: {
+                rate: parseInt(document.getElementById('rateLevel').textContent.replace('Level: ', '') || '1'),
+                damage: parseInt(document.getElementById('damageLevel').textContent.replace('Level: ', '') || '1'),
+                speed: parseInt(document.getElementById('speedLevel').textContent.replace('Level: ', '') || '1'),
+            },
+            lives: currentPlayerLives, // Beispiel: Hol die Leben aus einer bestehenden Variable
+            wave: currentWave || 1,   // Wellen, falls definiert
+        };
+    
+        try {
+            const response = await fetch('http://localhost:3000/save-game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: '123', ...gameStats }),
+            });
+    
+            if (response.ok) {
+                console.log('Spielstand gespeichert:', await response.json());
+            } else {
+                console.error('Fehler beim Speichern:', await response.text());
+            }
+        } catch (err) {
+            console.error('Netzwerkfehler:', err);
+        }
+    }
+
+    async function loadGameStats() {
+        try {
+            const response = await fetch('http://localhost:3000/load-game?userId=123');
+            if (!response.ok) {
+                console.error('Fehler beim Laden:', await response.text());
+                return;
+            }
+    
+            const gameStats = await response.json();
+            document.getElementById('moneyCount').textContent = gameStats.money;
+            document.getElementById('zombieCount').textContent = gameStats.zombies.total;
+            document.getElementById('fastZombieCount').textContent = gameStats.zombies.fast;
+            document.getElementById('slowZombieCount').textContent = gameStats.zombies.slow;
+            document.getElementById('rateLevel').textContent = `Level: ${gameStats.upgrades.rate}`;
+            document.getElementById('damageLevel').textContent = `Level: ${gameStats.upgrades.damage}`;
+            document.getElementById('speedLevel').textContent = `Level: ${gameStats.upgrades.speed}`;
+            currentPlayerLives = gameStats.lives; // Spielerleben zurücksetzen
+            currentWave = gameStats.wave;         // Wellen zurücksetzen
+            console.log('Spielstand geladen:', gameStats);
+        } catch (err) {
+            console.error('Netzwerkfehler:', err);
+        }
+    }
+
+    let token = "your_secret_key";
+    fetch('/api/stats', {
+        method: 'GET',
+        headers: { 'Authorization': token },
+      })
+        .then(response => response.json())
+        .then(data => console.log(data.stats))
+        .catch(err => console.error(err));
+
+    fetch('/api/stats', {
+        method: 'POST',
+        headers: {
+          'Authorization': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          wave: 5,
+          money: 100,
+          zombieStats: { health: 200, speed: 3 },
+          upgrades: 2,
+        }),
+      })
+  .then(response => response.json())
+  .then(data => console.log(data.message))
+  .catch(err => console.error(err));
+  
+  fetch('/api/stats', {
+    method: 'POST',
+    headers: {
+      'Authorization': token,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      wave: 5,
+      money: 100,
+      zombieStats: { health: 200, speed: 3 },
+      upgrades: 2,
+    }),
+  })
+    .then(response => response.json())
+    .then(data => console.log(data.message))
+    .catch(err => console.error(err));
+  
+
     startLevel();
 });

@@ -201,8 +201,9 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(result.message);
+                    // Token im sessionStorage speichern
                     sessionStorage.setItem('authToken', result.token);
+                    alert(result.message);
                     window.location.href = "/game"; // Weiterleitung zur Spielseite
                 } else {
                     alert(result.message || "Benutzername oder Passwort falsch.");
@@ -211,11 +212,20 @@
                 alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
             }
         });
+        console.log(sessionStorage.getItem('authToken'));
 
         // Start-Schaltfläche
         document.getElementById("startButton").addEventListener("click", () => {
+            // Token aus dem sessionStorage holen
+            const token = sessionStorage.getItem('authToken');
+            if (!token) {
+                alert('Bitte melden Sie sich an, um das Spiel zu starten.');
+                return;
+            }
             window.location.href = "/game"; // Weiterleitung zur Spielseite
         });
+
+
     </script>
 </body>
 
