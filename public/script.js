@@ -479,8 +479,6 @@ function updateZombies() {
     }
 
     function setLevelDetails() {
-        const growthFactor = currentLevel; // Skaliert die Schwierigkeit basierend auf dem Level
-    
         // Basiswerte
         const baseZombieHealth = 10; 
         const baseZombieDamage = 10;
@@ -494,24 +492,24 @@ function updateZombies() {
         const baseSlowZombieDamage = 30;
     
         // Wachstumslogik
-        zombieBaseHealth = baseZombieHealth + growthFactor * 10; // Zunehmende Gesundheit
-        zombieBaseDamage = baseZombieDamage + growthFactor; // Zunehmender Schaden
+        zombieBaseHealth = baseZombieHealth + currentLevel * 10; // Zunehmende Gesundheit
+        zombieBaseDamage = baseZombieDamage + currentLevel; // Zunehmender Schaden
 
-        fastZombieBaseHealth = baseFastZombieHealth + growthFactor * 8; 
-        fastZombieBaseDamage = baseFastZombieDamage + growthFactor;
+        fastZombieBaseHealth = baseFastZombieHealth + currentLevel * 8; 
+        fastZombieBaseDamage = baseFastZombieDamage + currentLevel;
 
-        slowZombieBaseHealth = baseSlowZombieHealth + growthFactor * 4;
-        slowZombieBaseDamage = baseSlowZombieDamage + growthFactor;
+        slowZombieBaseHealth = baseSlowZombieHealth + currentLevel * 4;
+        slowZombieBaseDamage = baseSlowZombieDamage + currentLevel;
     
-        totalZombies = 5 + growthFactor * 3; // Erhöht die Anzahl normaler Zombies
-        totalFastZombies = growthFactor >= 3 ? growthFactor * 2 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
-        totalSlowZombies = growthFactor >= 5 ? growthFactor * 2 : 0;
+        totalZombies = 5 + currentLevel * 3; // Erhöht die Anzahl normaler Zombies
+        totalFastZombies = currentLevel >= 3 ? currentLevel * 2 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
+        totalSlowZombies = currentLevel >= 5 ? currentLevel * 2 : 0;
     
         setZombieSpawnInterval(
-            Math.max(3000 - growthFactor * 200, 1000), // Schnelleres Spawnen
-            Math.max(7000 - growthFactor * 300, 3000), 
-            Math.max(2000 - growthFactor * 150, 800), 
-            Math.max(5000 - growthFactor * 300, 2000)
+            Math.max(3000 - currentLevel * 200, 1000), // Schnelleres Spawnen
+            Math.max(7000 - currentLevel * 300, 3000), 
+            Math.max(2000 - currentLevel * 150, 800), 
+            Math.max(5000 - currentLevel * 300, 2000)
         );
     
         remainingZombies = totalZombies;
@@ -624,7 +622,7 @@ function updateZombies() {
             shopMessage.innerText = 'Nicht genug Geld';
         }
     });
-
+    //nogaboga
     increaseDamageButton.addEventListener('click', () => {
         if (totalMoney >= upgradePrices.damage) {
             totalMoney -= upgradePrices.damage;
@@ -792,6 +790,40 @@ function updateZombies() {
     .then(data => console.log(data.message))
     .catch(err => console.error(err));
   
+    document.getElementById("saveStatsButton").addEventListener("click", async () => {
+        const gameStats = {
+            wave: currentLevel,  // Aktuelle Welle
+            money: totalMoney,  // Geld
+            upgrades: {
+                rate: upgradeLevels.rate,  // Upgrade-Level Feuerrate
+                damage: upgradeLevels.damage,  // Upgrade-Level Schaden
+                speed: upgradeLevels.speed,  // Upgrade-Level Kugelgeschwindigkeit
+                knockback: upgradeLevels.knockback  // Upgrade-Level Rückstoß
+            }
+        };
+    
+        try {
+            const response = await fetch("http://localhost:5000/api/stats", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer your_secret_key" // Falls Auth benötigt wird
+                },
+                body: JSON.stringify({ stats: gameStats })
+            });
+    
+            const data = await response.json();
+            if (data.success) {
+                alert("Spielstand erfolgreich gespeichert!");
+            } else {
+                alert("Fehler beim Speichern: " + data.message);
+            }
+        } catch (error) {
+            console.error("Fehler:", error);
+            alert("Speicherung fehlgeschlagen!");
+        }
+    });
+    
 
     startLevel();
 });

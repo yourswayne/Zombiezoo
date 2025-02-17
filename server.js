@@ -133,37 +133,33 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // Update stats
-app.post('/api/stats', async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Token missing or invalid.' });
-  }
-
+app.post("/api/stats", async (req, res) => {
   try {
-    const decoded = jwt.verify(token, 'your_secret_key');
-    const user = await User.findById(decoded.userId);
+      console.log("Empfangene Daten:", req.body); // Debugging
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
+      const { stats } = req.body;
+      if (!stats) {
+          return res.status(400).json({ success: false, message: "Keine Daten gesendet" });
+      }
 
-    const { wave, money, zombieStats, upgrades } = req.body;
+      if (!mongoose.connection.readyState) {
+          return res.status(500).json({ success: false, message: "MongoDB nicht verbunden!" });
+      }
 
-    if (wave !== undefined) user.stats.wave = wave;
-    if (money !== undefined) user.stats.money = money;
-    if (zombieStats) {
-      if (zombieStats.health !== undefined) user.stats.zombieStats.health = zombieStats.health;
-      if (zombieStats.speed !== undefined) user.stats.zombieStats.speed = zombieStats.speed;
-    }
-    if (upgrades !== undefined) user.stats.upgrades = upgrades;
+      // Daten speichern (MongoDB Beispiel)
+      await GameStats.updateOne(
+          { userId: "defaultUser" },
+          { $set: stats },
+          { upsert: true }
+      );
 
-    await user.save();
-    res.status(200).json({ success: true, message: 'Game progress updated!', stats: user.stats });
-  } catch (err) {
-    res.status(401).json({ success: false, message: 'Token is invalid or expired.' });
+      res.json({ success: true, message: "Spielstand gespeichert!" });
+  } catch (error) {
+      console.error("Fehler beim Speichern:", error);
+      res.status(500).json({ success: false, message: "Fehler beim Speichern", error: error.message });
   }
 });
+
 
 // Central error handler
 app.use((err, req, res, next) => {

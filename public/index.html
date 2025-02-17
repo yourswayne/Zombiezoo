@@ -16,15 +16,15 @@
 
     <div id="zombieCounter" style="display: none;">
         <div>
-            <img id="zombieIcon" src="./images/zombie.png" alt="Zombie Icon">
+            <img id="zombieIcon" src="/images/zombie.png" alt="Zombie Icon">
             <span id="zombieCount"></span>
         </div>
         <div>
-            <img id="fastZombieIcon" src="./images/zombie-y.png" alt="Fast Zombie Icon">
+            <img id="fastZombieIcon" src="/images/zombie-y.png" alt="Fast Zombie Icon">
             <span id="fastZombieCount"></span>
         </div>
         <div>
-            <img id="slowZombieIcon" src="./images/zombie-o.png" alt="Slow Zombie Icon">
+            <img id="slowZombieIcon" src="/images/zombie-o.png" alt="Slow Zombie Icon">
             <span id="slowZombieCount"></span>
         </div>
         <span id="moneyCount"></span>
@@ -38,6 +38,8 @@
         <button id="continueButton">Fortsetzen</button>
         <button id="retryButtonPause">Wiederholen</button>
         <button id="resetButton">Spiel zurücksetzen</button>
+        <button id="saveStatsButton">Spielstand speichern</button>
+        
     </div>
     <div id="shopMenu" style="display: none;">
         <h2>Shop</h2>
@@ -59,7 +61,9 @@
         </div>
         <button id="closeShop">Shop schließen</button>
         <div id="shopMessage" style="color: white; margin-top: 10px;"></div>
+       
     </div>
+        
     <div class="overlay" style="display: none;"></div>
     <canvas id="gameCanvas"></canvas>
 
