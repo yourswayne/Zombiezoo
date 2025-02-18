@@ -773,57 +773,70 @@ function updateZombies() {
   .then(data => console.log(data.message))
   .catch(err => console.error(err));
   
-  fetch('/api/stats', {
+// Entferne den Authorization-Header aus den fetch-Aufrufen
+fetch('/api/stats', {
+    method: 'GET',
+    // Entferne den Authorization-Header
+})
+.then(response => response.json())
+.then(data => console.log(data.stats))
+.catch(err => console.error(err));
+
+fetch('/api/stats', {
     method: 'POST',
     headers: {
-      'Authorization': token,
-      'Content-Type': 'application/json',
+        // Entferne den Authorization-Header
+        'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      wave: 5,
-      money: 100,
-      zombieStats: { health: 200, speed: 3 },
-      upgrades: 2,
+        wave: 5,
+        money: 100,
+        zombieStats: { health: 200, speed: 3 },
+        upgrades: 2,
     }),
-  })
-    .then(response => response.json())
-    .then(data => console.log(data.message))
-    .catch(err => console.error(err));
-  
-    document.getElementById("saveStatsButton").addEventListener("click", async () => {
-        const gameStats = {
-            wave: currentLevel,  // Aktuelle Welle
-            money: totalMoney,  // Geld
-            upgrades: {
-                rate: upgradeLevels.rate,  // Upgrade-Level Feuerrate
-                damage: upgradeLevels.damage,  // Upgrade-Level Schaden
-                speed: upgradeLevels.speed,  // Upgrade-Level Kugelgeschwindigkeit
-                knockback: upgradeLevels.knockback  // Upgrade-Level Rückstoß
-            }
-        };
-    
-        try {
-            const response = await fetch("http://localhost:5000/api/stats", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer your_secret_key" // Falls Auth benötigt wird
-                },
-                body: JSON.stringify({ stats: gameStats })
-            });
-    
-            const data = await response.json();
-            if (data.success) {
-                alert("Spielstand erfolgreich gespeichert!");
-            } else {
-                alert("Fehler beim Speichern: " + data.message);
-            }
-        } catch (error) {
-            console.error("Fehler:", error);
-            alert("Speicherung fehlgeschlagen!");
+})
+.then(response => response.json())
+.then(data => console.log(data.message))
+.catch(err => console.error(err));
+
+// Ändere den Event-Listener für den "saveStatsButton"
+document.getElementById("saveStatsButton").addEventListener("click", async () => {
+    const gameStats = {
+        wave: currentLevel,
+        money: totalMoney,
+        upgrades: {
+            rate: upgradeLevels.rate,
+            damage: upgradeLevels.damage,
+            speed: upgradeLevels.speed,
+            knockback: upgradeLevels.knockback
         }
+    };
+
+    try {
+        const response = await fetch("http://localhost:5000/api/stats", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // Entferne den Authorization-Header
+            },
+            body: JSON.stringify({ stats: gameStats })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("Spielstand erfolgreich gespeichert!");
+        } else {
+            alert("Fehler beim Speichern: " + data.message);
+        }
+    } catch (error) {
+        console.error("Fehler:", error);
+        alert("Speicherung fehlgeschlagen!");
+    }
+    app.use((req, res, next) => {
+        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval';");
+        next();
     });
-    
+});
 
     startLevel();
 });
