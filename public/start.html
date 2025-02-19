@@ -118,74 +118,19 @@
         <button id="backToLoginButton">Zurück</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/parsleyjs/dist/parsley.min.js"></script>
     <script>
-        const mainContainer = document.getElementById("mainContainer");
-        const authContainer = document.getElementById("authContainer");
-        const registerContainer = document.getElementById("registerContainer");
-        const loginButton = document.getElementById("loginButton");
-        const backButton = document.getElementById("backButton");
-        const registerLink = document.getElementById("registerLink");
-        const backToLoginButton = document.getElementById("backToLoginButton");
-
-        // Event Listener für die Login-Schaltfläche
-        loginButton.addEventListener("click", () => {
-            mainContainer.style.display = "none";
-            authContainer.style.display = "flex";
+        document.getElementById("loginButton").addEventListener("click", () => {
+            document.getElementById("mainContainer").style.display = "none";
+            document.getElementById("authContainer").style.display = "flex";
         });
 
-        // Zurück-Schaltfläche im Login-Formular
-        backButton.addEventListener("click", () => {
-            authContainer.style.display = "none";
-            mainContainer.style.display = "flex";
-        });
-
-        // Registrierung-Link
-        registerLink.addEventListener("click", (e) => {
+        document.getElementById("registerLink").addEventListener("click", (e) => {
             e.preventDefault();
-            authContainer.style.display = "none";
-            registerContainer.style.display = "flex";
+            document.getElementById("authContainer").style.display = "none";
+            document.getElementById("registerContainer").style.display = "flex";
         });
 
-        // Zurück-Schaltfläche im Registrierungsformular
-        backToLoginButton.addEventListener("click", () => {
-            registerContainer.style.display = "none";
-            authContainer.style.display = "flex";
-        });
-
-        // Registrierung
-        const registerForm = document.getElementById("registerForm");
-        registerForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const username = document.getElementById("registerUsername").value;
-            const email = document.getElementById("registerEmail").value;
-            const password = document.getElementById("registerPassword").value;
-
-            try {
-                const response = await fetch("/api/register", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, email, password })
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    alert(result.message);
-                    registerContainer.style.display = "none";
-                    mainContainer.style.display = "flex";
-                } else {
-                    alert(result.message || "Fehler bei der Registrierung.");
-                }
-            } catch (err) {
-                alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
-            }
-        });
-
-        // Login
-        const authForm = document.getElementById("authForm");
-        authForm.addEventListener("submit", async (e) => {
+        document.getElementById("authForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const username = document.getElementById("username").value;
@@ -201,10 +146,10 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Token im sessionStorage speichern
                     sessionStorage.setItem('authToken', result.token);
+                    sessionStorage.setItem('username', username);
                     alert(result.message);
-                    window.location.href = "/game"; // Weiterleitung zur Spielseite
+                    window.location.href = `/game?username=${encodeURIComponent(username)}`;
                 } else {
                     alert(result.message || "Benutzername oder Passwort falsch.");
                 }
@@ -212,19 +157,6 @@
                 alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
             }
         });
-        console.log(sessionStorage.getItem('authToken'));
-
-        // Start-Schaltfläche
-        document.getElementById("startButton").addEventListener("click", () => {
-            // Token aus dem sessionStorage holen
-            const token = sessionStorage.getItem('authToken');
-            if (!token) {
-                alert('Bitte melden Sie sich an, um das Spiel zu starten.');
-                return;
-            }
-            window.location.href = "/game"; // Weiterleitung zur Spielseite
-        });
     </script>
 </body>
-
 </html>

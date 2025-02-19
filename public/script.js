@@ -690,153 +690,79 @@ function updateZombies() {
     }
 
     async function saveGameStats() {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
+            alert("Fehler: Kein Benutzername gespeichert! Bitte erneut anmelden.");
+            return;
+        }
+    
         const gameStats = {
-            money: parseInt(document.getElementById('moneyCount').textContent || '0'),
-            zombies: {
-                total: parseInt(document.getElementById('zombieCount').textContent || '0'),
-                fast: parseInt(document.getElementById('fastZombieCount').textContent || '0'),
-                slow: parseInt(document.getElementById('slowZombieCount').textContent || '0'),
-            },
+            wave: currentLevel,
+            money: totalMoney,
             upgrades: {
-                rate: parseInt(document.getElementById('rateLevel').textContent.replace('Level: ', '') || '1'),
-                damage: parseInt(document.getElementById('damageLevel').textContent.replace('Level: ', '') || '1'),
-                speed: parseInt(document.getElementById('speedLevel').textContent.replace('Level: ', '') || '1'),
-            },
-            lives: currentPlayerLives, // Beispiel: Hol die Leben aus einer bestehenden Variable
-            wave: currentWave || 1,   // Wellen, falls definiert
+                rate: upgradeLevels.rate,
+                damage: upgradeLevels.damage,
+                speed: upgradeLevels.speed,
+                knockback: upgradeLevels.knockback
+            }
         };
     
         try {
-            const response = await fetch('http://localhost:3000/save-game', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: '123', ...gameStats }),
+            const response = await fetch("http://localhost:5000/api/stats", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username: username, stats: gameStats })
             });
     
-            if (response.ok) {
-                console.log('Spielstand gespeichert:', await response.json());
+            const data = await response.json();
+            if (data.success) {
+                alert("Spielstand erfolgreich gespeichert!");
             } else {
-                console.error('Fehler beim Speichern:', await response.text());
+                alert("Fehler beim Speichern: " + data.message);
             }
-        } catch (err) {
-            console.error('Netzwerkfehler:', err);
+        } catch (error) {
+            console.error("Fehler:", error);
+            alert("Speicherung fehlgeschlagen!");
         }
     }
-
+    
     async function loadGameStats() {
+        const username = sessionStorage.getItem("username");
+        if (!username) {
+            console.error("Kein Benutzername gespeichert.");
+            return;
+        }
+    
         try {
-            const response = await fetch('http://localhost:3000/load-game?userId=123');
+            const response = await fetch(`http://localhost:5000/api/stats?username=${username}`);
             if (!response.ok) {
-                console.error('Fehler beim Laden:', await response.text());
+                console.error("Fehler beim Laden:", await response.text());
                 return;
             }
     
             const gameStats = await response.json();
-            document.getElementById('moneyCount').textContent = gameStats.money;
-            document.getElementById('zombieCount').textContent = gameStats.zombies.total;
-            document.getElementById('fastZombieCount').textContent = gameStats.zombies.fast;
-            document.getElementById('slowZombieCount').textContent = gameStats.zombies.slow;
-            document.getElementById('rateLevel').textContent = `Level: ${gameStats.upgrades.rate}`;
-            document.getElementById('damageLevel').textContent = `Level: ${gameStats.upgrades.damage}`;
-            document.getElementById('speedLevel').textContent = `Level: ${gameStats.upgrades.speed}`;
-            currentPlayerLives = gameStats.lives; // Spielerleben zurücksetzen
-            currentWave = gameStats.wave;         // Wellen zurücksetzen
+            if (!gameStats.success) {
+                console.error("Fehler beim Abrufen des Spielstands:", gameStats.message);
+                return;
+            }
+    
+            document.getElementById('moneyCount').textContent = gameStats.stats.money;
+            document.getElementById('rateLevel').textContent = `Level: ${gameStats.stats.upgrades.rate}`;
+            document.getElementById('damageLevel').textContent = `Level: ${gameStats.stats.upgrades.damage}`;
+            document.getElementById('speedLevel').textContent = `Level: ${gameStats.stats.upgrades.speed}`;
+            currentWave = gameStats.stats.wave;
             console.log('Spielstand geladen:', gameStats);
         } catch (err) {
             console.error('Netzwerkfehler:', err);
         }
     }
-
-    let token = "your_secret_key";
-    fetch('/api/stats', {
-        method: 'GET',
-        headers: { 'Authorization': token },
-      })
-        .then(response => response.json())
-        .then(data => console.log(data.stats))
-        .catch(err => console.error(err));
-
-    fetch('/api/stats', {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          wave: 5,
-          money: 100,
-          zombieStats: { health: 200, speed: 3 },
-          upgrades: 2,
-        }),
-      })
-  .then(response => response.json())
-  .then(data => console.log(data.message))
-  .catch(err => console.error(err));
-  
-// Entferne den Authorization-Header aus den fetch-Aufrufen
-fetch('/api/stats', {
-    method: 'GET',
-    // Entferne den Authorization-Header
-})
-.then(response => response.json())
-.then(data => console.log(data.stats))
-.catch(err => console.error(err));
-
-fetch('/api/stats', {
-    method: 'POST',
-    headers: {
-        // Entferne den Authorization-Header
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        wave: 5,
-        money: 100,
-        zombieStats: { health: 200, speed: 3 },
-        upgrades: 2,
-    }),
-})
-.then(response => response.json())
-.then(data => console.log(data.message))
-.catch(err => console.error(err));
-
-// Ändere den Event-Listener für den "saveStatsButton"
-document.getElementById("saveStatsButton").addEventListener("click", async () => {
-    const gameStats = {
-        wave: currentLevel,
-        money: totalMoney,
-        upgrades: {
-            rate: upgradeLevels.rate,
-            damage: upgradeLevels.damage,
-            speed: upgradeLevels.speed,
-            knockback: upgradeLevels.knockback
-        }
-    };
-
-    try {
-        const response = await fetch("http://localhost:5000/api/stats", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                // Entferne den Authorization-Header
-            },
-            body: JSON.stringify({ stats: gameStats })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            alert("Spielstand erfolgreich gespeichert!");
-        } else {
-            alert("Fehler beim Speichern: " + data.message);
-        }
-    } catch (error) {
-        console.error("Fehler:", error);
-        alert("Speicherung fehlgeschlagen!");
-    }
-    app.use((req, res, next) => {
-        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval';");
-        next();
-    });
-});
+    
+    document.getElementById("saveStatsButton").addEventListener("click", saveGameStats);
+    
+    window.addEventListener("load", loadGameStats);
+    
 
     startLevel();
 });
