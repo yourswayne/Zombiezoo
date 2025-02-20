@@ -728,40 +728,55 @@ function updateZombies() {
         }
     }
     
-    async function loadGameStats() {
+    const loadGameStats = async () => {
         const username = sessionStorage.getItem("username");
         if (!username) {
-            console.error("Kein Benutzername gespeichert.");
+            console.error("❌ Kein Benutzername gespeichert.");
             return;
         }
     
         try {
-            const response = await fetch(`http://localhost:5000/api/stats?username=${username}`);
-            if (!response.ok) {
-                console.error("Fehler beim Laden:", await response.text());
+            const response = await fetch(`/api/stats?username=${username}`);
+            const text = await response.text(); // Hole die Antwort als Text zum Debugging
+            console.log("📌 Server Antwort:", text);
+    
+            // Versuche, das JSON zu parsen
+            const result = JSON.parse(text);
+    
+            if (!result.success) {
+                console.error("❌ Fehler beim Laden des Spielstands:", result.message);
                 return;
             }
     
-            const gameStats = await response.json();
-            if (!gameStats.success) {
-                console.error("Fehler beim Abrufen des Spielstands:", gameStats.message);
-                return;
-            }
+            const stats = result.stats;
     
-            document.getElementById('moneyCount').textContent = gameStats.stats.money;
-            document.getElementById('rateLevel').textContent = `Level: ${gameStats.stats.upgrades.rate}`;
-            document.getElementById('damageLevel').textContent = `Level: ${gameStats.stats.upgrades.damage}`;
-            document.getElementById('speedLevel').textContent = `Level: ${gameStats.stats.upgrades.speed}`;
-            currentWave = gameStats.stats.wave;
-            console.log('Spielstand geladen:', gameStats);
+            // UI-Werte setzen
+            document.getElementById('moneyCount').textContent = stats.money;
+            document.getElementById('rateLevel').textContent = `Level: ${stats.upgrades.rate}`;
+            document.getElementById('damageLevel').textContent = `Level: ${stats.upgrades.damage}`;
+            document.getElementById('speedLevel').textContent = `Level: ${stats.upgrades.speed}`;
+    
+            // WICHTIG: Spielwerte setzen!
+            totalMoney = stats.money;
+            currentLevel = stats.wave;
+            upgradeLevels.rate = stats.upgrades.rate;
+            upgradeLevels.damage = stats.upgrades.damage;
+            upgradeLevels.speed = stats.upgrades.speed;
+    
+            console.log("✅ Spielstand erfolgreich geladen:", stats);
         } catch (err) {
-            console.error('Netzwerkfehler:', err);
+            console.error("❌ Netzwerk- oder JSON-Fehler beim Laden des Spielstands:", err);
         }
-    }
+    };
+    
+    // Lade Spielstand, wenn das Spiel gestartet wird
+    window.addEventListener("load", loadGameStats);
+    
+    
     
     document.getElementById("saveStatsButton").addEventListener("click", saveGameStats);
     
-    window.addEventListener("load", loadGameStats);
+
     
 
     startLevel();

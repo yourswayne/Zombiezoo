@@ -149,25 +149,25 @@ app.get('/api/profile-image', async (req, res) => {
   }
 });
 
-// ✅ GET: Spielstand abrufen
-app.get('/api/stats', async (req, res) => {
-    try {
-        const { username } = req.query;
-        if (!username) {
-            return res.status(400).json({ success: false, message: "Kein Benutzername angegeben" });
-        }
+app.get("/api/stats", async (req, res) => {
+  try {
+      const { username } = req.query;
+      if (!username) {
+          return res.status(400).json({ success: false, message: "Kein Benutzername angegeben" });
+      }
 
-        const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
-        }
+      const user = await User.findOne({ username });
+      if (!user) {
+          return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
+      }
 
-        res.json({ success: true, stats: user.stats });
-    } catch (error) {
-        console.error("❌ Fehler beim Abrufen:", error);
-        res.status(500).json({ success: false, message: "Fehler beim Abrufen der Daten", error: error.message });
-    }
+      res.json({ success: true, stats: user.stats });
+  } catch (error) {
+      console.error("❌ Fehler beim Abrufen des Spielstands:", error);
+      res.status(500).json({ success: false, message: "Fehler beim Abrufen der Daten", error: error.message });
+  }
 });
+
 
 // ✅ Server starten
 app.listen(HTTP_Port, () => console.log(`✅ Server läuft auf http://localhost:${HTTP_Port}/`));
