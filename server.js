@@ -42,6 +42,7 @@ mongoose.connect('mongodb://mongoadmin:mySecret1!@10.115.2.1:8017/', {
 });
 
 // ✅ Mongoose Schema für Benutzer
+// ✅ Mongoose Schema für Benutzer (mit Waffenwerten)
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
@@ -55,9 +56,14 @@ const userSchema = new mongoose.Schema({
             damage: { type: Number, default: 1 },
             speed: { type: Number, default: 1 },
             knockback: { type: Number, default: 0 }
-        }
-    },
+        },
+        shotCooldown: { type: Number, default: 750 },
+        bulletDamage: { type: Number, default: 5 },
+        bulletSpeed: { type: Number, default: 11 },
+        knockbackDistance: { type: Number, default: 0 }
+    }
 }, { collection: 'zombie_game' });
+
 
 const User = mongoose.model('user', userSchema);
 app.use((req, res, next) => {
@@ -118,9 +124,23 @@ app.post("/api/stats", async (req, res) => {
             return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
         }
 
-        user.stats = stats;
-        await user.save();
+        // 🟢 Spielstand inklusive Waffenwerte speichern
+        user.stats = {
+            wave: stats.wave,
+            money: stats.money,
+            upgrades: {
+                rate: stats.upgrades.rate,
+                damage: stats.upgrades.damage,
+                speed: stats.upgrades.speed,
+                knockback: stats.upgrades.knockback
+            },
+            shotCooldown: stats.shotCooldown,
+            bulletDamage: stats.bulletDamage,
+            bulletSpeed: stats.bulletSpeed,
+            knockbackDistance: stats.knockbackDistance
+        };
 
+        await user.save();
         console.log(`✅ Spielstand gespeichert für ${username}`);
         res.json({ success: true, message: "Spielstand gespeichert!" });
     } catch (error) {
@@ -128,6 +148,7 @@ app.post("/api/stats", async (req, res) => {
         res.status(500).json({ success: false, message: "Fehler beim Speichern", error: error.message });
     }
 });
+
 
 app.get('/api/profile-image', async (req, res) => {
   try {
@@ -150,23 +171,35 @@ app.get('/api/profile-image', async (req, res) => {
 });
 
 app.get("/api/stats", async (req, res) => {
-  try {
-      const { username } = req.query;
-      if (!username) {
-          return res.status(400).json({ success: false, message: "Kein Benutzername angegeben" });
-      }
+    try {
+        const { username } = req.query;
+        if (!username) {
+            return res.status(400).json({ success: false, message: "Kein Benutzername angegeben" });
+        }
 
-      const user = await User.findOne({ username });
-      if (!user) {
-          return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
-      }
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
+        }
 
-      res.json({ success: true, stats: user.stats });
-  } catch (error) {
-      console.error("❌ Fehler beim Abrufen des Spielstands:", error);
-      res.status(500).json({ success: false, message: "Fehler beim Abrufen der Daten", error: error.message });
-  }
+        // 🟢 Stelle sicher, dass ALLE Werte gesendet werden
+        const stats = {
+            wave: user.stats.wave,
+            money: user.stats.money,
+            upgrades: user.stats.upgrades,
+            shotCooldown: user.stats.shotCooldown,
+            bulletDamage: user.stats.bulletDamage,
+            bulletSpeed: user.stats.bulletSpeed,
+            knockbackDistance: user.stats.knockbackDistance
+        };
+
+        res.json({ success: true, stats });
+    } catch (error) {
+        console.error("❌ Fehler beim Abrufen des Spielstands:", error);
+        res.status(500).json({ success: false, message: "Fehler beim Abrufen der Daten", error: error.message });
+    }
 });
+
 
 
 // ✅ Server starten

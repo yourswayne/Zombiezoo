@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     let shootInterval;
-    let totalMoney = 0;
+    let totalMoney = 100;
     let roundMoney = 0;
 
 
@@ -731,16 +731,15 @@ function updateZombies() {
     const loadGameStats = async () => {
         const username = sessionStorage.getItem("username");
         if (!username) {
-            console.error("❌ Kein Benutzername gespeichert.");
+            console.error("❌ Kein Benutzername gespeichert. Bitte anmelden.");
             return;
         }
     
         try {
             const response = await fetch(`/api/stats?username=${username}`);
-            const text = await response.text(); // Hole die Antwort als Text zum Debugging
-            console.log("📌 Server Antwort:", text);
+            const text = await response.text();
+            console.log("📌 Rohe Server Antwort:", text);
     
-            // Versuche, das JSON zu parsen
             const result = JSON.parse(text);
     
             if (!result.success) {
@@ -750,31 +749,117 @@ function updateZombies() {
     
             const stats = result.stats;
     
-            // UI-Werte setzen
-            document.getElementById('moneyCount').textContent = stats.money;
-            document.getElementById('rateLevel').textContent = `Level: ${stats.upgrades.rate}`;
-            document.getElementById('damageLevel').textContent = `Level: ${stats.upgrades.damage}`;
-            document.getElementById('speedLevel').textContent = `Level: ${stats.upgrades.speed}`;
+            console.log("✅ GELADENE SPIELWERTE:", stats);
     
-            // WICHTIG: Spielwerte setzen!
+            // 🟢 Speichern der geladenen Werte
             totalMoney = stats.money;
             currentLevel = stats.wave;
             upgradeLevels.rate = stats.upgrades.rate;
             upgradeLevels.damage = stats.upgrades.damage;
             upgradeLevels.speed = stats.upgrades.speed;
+            upgradeLevels.knockback = stats.upgrades.knockback;
     
-            console.log("✅ Spielstand erfolgreich geladen:", stats);
+            shotCooldown = stats.shotCooldown ?? shotCooldown;
+            bulletDamage = stats.bulletDamage ?? bulletDamage;
+            bulletSpeed = stats.bulletSpeed ?? bulletSpeed;
+            knockbackDistance = stats.knockbackDistance ?? knockbackDistance;
+    
+            console.log("✅ SPIELSTAND ÜBERNOMMEN:");
+            console.log("💰 Geld:", totalMoney);
+            console.log("🌊 Level:", currentLevel);
+            console.log("🛠️ Upgrades:", upgradeLevels);
+            console.log("🔫 Waffenwerte:", { shotCooldown, bulletDamage, bulletSpeed, knockbackDistance });
+    
+            updateGameState();
+    
         } catch (err) {
             console.error("❌ Netzwerk- oder JSON-Fehler beim Laden des Spielstands:", err);
         }
     };
     
+    
+    const updateGameState = () => {
+    console.log("🔄 SPIELWERTE IN SPIELMECHANIK ÜBERTRAGEN...");
+
+    // Falls das Spiel eine Funktion hat, um das Level zu setzen
+    if (typeof setWave === "function") {
+        setWave(currentLevel);
+    } else {
+        console.warn("⚠️ Funktion 'setWave()' nicht gefunden!");
+    }
+
+    // Falls eine Upgrade-Funktion existiert
+    if (typeof applyUpgrades === "function") {
+        applyUpgrades(upgradeLevels);
+    } else {
+        console.warn("⚠️ Funktion 'applyUpgrades()' nicht gefunden!");
+    }
+
+    // Falls eine Waffen-Update-Funktion existiert
+    if (typeof updateWeaponStats === "function") {
+        updateWeaponStats(shotCooldown, bulletDamage, bulletSpeed, knockbackDistance);
+    } else {
+        console.warn("⚠️ Funktion 'updateWeaponStats()' nicht gefunden!");
+    }
+
+    console.log("✅ SPIELMECHANIK AKTUALISIERT MIT:", {
+        wave: currentLevel,
+        upgrades: upgradeLevels,
+        shotCooldown,
+        bulletDamage,
+        bulletSpeed,
+        knockbackDistance
+    });
+};
+
+
+
     // Lade Spielstand, wenn das Spiel gestartet wird
     window.addEventListener("load", loadGameStats);
     
     
     
-    document.getElementById("saveStatsButton").addEventListener("click", saveGameStats);
+document.getElementById("saveStatsButton").addEventListener("click", async () => {
+    const username = sessionStorage.getItem("username");
+    if (!username) {
+        alert("Fehler: Kein Benutzername gefunden. Bitte neu anmelden.");
+        return;
+    }
+
+    const gameStats = {
+        wave: currentLevel,
+        money: totalMoney,
+        upgrades: {
+            rate: upgradeLevels.rate,
+            damage: upgradeLevels.damage,
+            speed: upgradeLevels.speed,
+            knockback: upgradeLevels.knockback
+        },
+        shotCooldown: shotCooldown,
+        bulletDamage: bulletDamage,
+        bulletSpeed: bulletSpeed,
+        knockbackDistance: knockbackDistance
+    };
+
+    try {
+        const response = await fetch("/api/stats", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, stats: gameStats })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("Spielstand erfolgreich gespeichert!");
+        } else {
+            alert("Fehler beim Speichern: " + data.message);
+        }
+    } catch (error) {
+        console.error("❌ Fehler beim Speichern:", error);
+        alert("Speicherung fehlgeschlagen!");
+    }
+});
+
     
 
     
