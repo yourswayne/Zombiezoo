@@ -79,6 +79,55 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ POST: Benutzer registrieren
+app.post("/api/register", async (req, res) => {
+    try {
+        console.log("📩 Registrierungs-Daten empfangen:", req.body);
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "Alle Felder sind erforderlich." });
+        }
+
+        // Prüfen, ob Benutzername bereits existiert
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ message: "Benutzername existiert bereits." });
+        }
+
+        // Passwort hashen
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Neuen Benutzer erstellen
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword, // Speichert das gehashte Passwort
+            stats: {
+                wave: 1,
+                money: 100,
+                upgrades: {
+                    rate: 1,
+                    damage: 1,
+                    speed: 1,
+                    knockback: 0
+                },
+                shotCooldown: 750,
+                bulletDamage: 5,
+                bulletSpeed: 11,
+                knockbackDistance: 0
+            }
+        });
+
+        await newUser.save();
+        console.log(`✅ Neuer Benutzer registriert: ${username}`);
+        res.json({ message: "Registrierung erfolgreich! Bitte anmelden." });
+
+    } catch (error) {
+        console.error("❌ Fehler bei der Registrierung:", error);
+        res.status(500).json({ message: "Fehler bei der Registrierung.", error: error.message });
+    }
+});
 
 
 // ✅ POST: Login

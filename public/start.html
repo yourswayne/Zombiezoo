@@ -149,13 +149,67 @@
                 if (response.ok) {
                     sessionStorage.setItem('authToken', result.token);
                     sessionStorage.setItem('username', username);
+                    console.log("✅ Token gespeichert:", result.token);
+                    console.log("✅ Username gespeichert:", username);
                     alert(result.message);
                     window.location.href = `/game?username=${encodeURIComponent(username)}`;
                 } else {
                     alert(result.message || "Benutzername oder Passwort falsch.");
                 }
             } catch (err) {
-                alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+                alert("❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+            }
+        });
+
+        document.getElementById("registerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById("registerUsername").value;
+            const email = document.getElementById("registerEmail").value;
+            const password = document.getElementById("registerPassword").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (password !== confirmPassword) {
+                alert("❌ Passwörter stimmen nicht überein!");
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log("✅ Benutzer erfolgreich registriert:", username);
+                    alert(result.message);
+
+                    // ✅ Automatische Anmeldung nach Registrierung
+                    const loginResponse = await fetch("/api/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const loginResult = await loginResponse.json();
+
+                    if (loginResponse.ok) {
+                        sessionStorage.setItem("authToken", loginResult.token);
+                        sessionStorage.setItem("username", username);
+                        console.log("✅ Token gespeichert nach Registrierung:", loginResult.token);
+                        console.log("✅ Benutzer erfolgreich eingeloggt:", username);
+                        window.location.href = `/game?username=${encodeURIComponent(username)}`;
+                    } else {
+                        alert("⚠️ Registrierung erfolgreich, aber automatische Anmeldung fehlgeschlagen. Bitte manuell anmelden.");
+                    }
+                } else {
+                    alert(result.message || "Fehler bei der Registrierung.");
+                }
+            } catch (err) {
+                alert("❌ Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
             }
         });
     </script>
