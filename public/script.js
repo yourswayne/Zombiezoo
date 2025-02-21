@@ -395,7 +395,7 @@ function updateZombies() {
     function gameWon() {
         gameRunning = false;
         // Überprüfen, ob es die zweite Welle ist
-        if (currentLevel === 2) {
+        if (currentLevel === 5) {
             gameOverText.innerText = 'Game won!';
         } else {
             gameOverText.innerText = 'Wave complete!';
