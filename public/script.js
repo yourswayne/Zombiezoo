@@ -689,6 +689,16 @@ function updateZombies() {
         enableKnockbackButton.innerText = `Rückstoß aktivieren - $${upgradePrices.knockback}`;
     }
 
+    function updateCurrentLevelDisplay() {
+        const levelDisplay = document.getElementById("currentLevelDisplay"); // Stelle sicher, dass dieses Element existiert!
+        if (levelDisplay) {
+            levelDisplay.innerText = `Level: ${currentLevel}`;
+        } else {
+            console.warn("⚠️ Element für die Level-Anzeige nicht gefunden!");
+        }
+    }
+    
+
     async function saveGameStats() {
         const username = sessionStorage.getItem("username");
         if (!username) {
@@ -770,6 +780,13 @@ function updateZombies() {
             console.log("🛠️ Upgrades:", upgradeLevels);
             console.log("🔫 Waffenwerte:", { shotCooldown, bulletDamage, bulletSpeed, knockbackDistance });
     
+            updateMoneyDisplay();      // Aktualisiert das Geld in der UI
+            updateUpgradeDisplays();
+            updateCurrentLevelDisplay();  
+            nextLevel();    
+
+            console.log("✅ UI erfolgreich aktualisiert.");
+
             updateGameState();
     
         } catch (err) {
