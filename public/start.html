@@ -7,14 +7,55 @@
     <title>Startseite</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/parsleyjs/dist/parsley.css">
     <style>
+                /* 🎬 Hintergrundvideo */
+                .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -2;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* 🔥 Schwarz-Overlay für dunkle Atmosphäre */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #333;
             color: white;
             font-family: Arial, sans-serif;
+
+        }
+
+        #mainContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mainContainer h1 {
+            margin-bottom: 20px;
+            /* Abstand zwischen Überschrift und Buttons */
         }
 
         #startButton,
@@ -27,7 +68,10 @@
             border-radius: 5px;
             cursor: pointer;
             margin: 5px;
+            flex-direction: column;
+            display: flex;
         }
+
 
         #startButton:hover,
         #loginButton:hover {
@@ -88,6 +132,15 @@
 </head>
 
 <body>
+       <!-- 🎬 Hintergrundvideo -->
+       <div class="video-container">
+        <video autoplay loop muted playsinline>
+            <source src="0217.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- 🔥 Overlay für dunkle Atmosphäre -->
+    <div class="overlay"></div>
     <div id="mainContainer">
         <h1>Willkommen beim Zombie-Spiel!</h1>
         <button id="startButton">Spiel starten</button>
@@ -111,7 +164,8 @@
             <input type="text" id="registerUsername" name="username" placeholder="Benutzername" required>
             <input type="email" id="registerEmail" name="email" placeholder="E-Mail" required>
             <input type="password" id="registerPassword" name="password" placeholder="Passwort" required>
-            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Passwort bestätigen" required>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Passwort bestätigen"
+                required>
             <input type="file" id="profileImage" accept="image/*">
             <button type="submit">Registrieren</button>
         </form>
