@@ -496,9 +496,9 @@ function updateZombies() {
         slowZombieBaseHealth = baseSlowZombieHealth + currentLevel * 4;
         slowZombieBaseDamage = baseSlowZombieDamage + currentLevel;
     
-        totalZombies = 5 + growthFactor * 3; // Erhöht die Anzahl normaler Zombies
-        totalFastZombies = 4+ growthFactor >= 1 ? growthFactor * 4 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
-        totalSlowZombies = growthFactor >= 2 ? growthFactor * 3 : 0;
+        totalZombies = 5 + currentLevel * 3; // Erhöht die Anzahl normaler Zombies
+        totalFastZombies = 4+ currentLevel >= 1 ? currentLevel * 4 : 0; // Fügt schnelle Zombies ab Level 3 hinzu
+        totalSlowZombies = currentLevel >= 2 ? currentLevel * 3 : 0;
     
         setZombieSpawnInterval(
             Math.max(3000 - currentLevel * 200, 1000), // Schnelleres Spawnen
