@@ -146,8 +146,21 @@ canvas {
     margin-top: 10px;
 }
 
-#explosion {
+#explosionContainer {
     position: absolute;
-    display: none;
-    z-index: 10; /* Stelle sicher, dass es über anderen Elementen liegt */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Damit die Explosion keine Benutzerinteraktion blockiert */
+    z-index: 999; /* Über anderen Elementen anzeigen */
 }
+.explosion {
+    position: absolute;
+    width: 160px; /* Größe der Explosion anpassen */
+    height: 100px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
