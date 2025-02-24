@@ -403,7 +403,7 @@ function updateZombies() {
     
         // Wenn Level 2 erreicht ist, setze das Geld auf 0
         if (currentLevel === 2) {
-            totalMoney == 0;
+            totalMoney == totalMoney + 1000;
             localStorage.setItem('totalMoney', totalMoney);
         } else {
             nextButton.style.display = 'inline-block';
@@ -487,13 +487,14 @@ function updateZombies() {
         const baseSlowZombieDamage = 30;
     
         // Wachstumslogik
-        zombieBaseHealth = baseZombieHealth + currentLevel * 10; // Zunehmende Gesundheit
+        zombieBaseHealth = baseZombieHealth + currentLevel * 4; // Zunehmende Gesundheit
         zombieBaseDamage = baseZombieDamage + currentLevel; // Zunehmender Schaden
+        player.health = player.health + currentLevel;
 
-        fastZombieBaseHealth = baseFastZombieHealth + currentLevel * 8; 
+        fastZombieBaseHealth = baseFastZombieHealth + currentLevel * 2; 
         fastZombieBaseDamage = baseFastZombieDamage + currentLevel;
 
-        slowZombieBaseHealth = baseSlowZombieHealth + currentLevel * 4;
+        slowZombieBaseHealth = baseSlowZombieHealth + currentLevel * 10;
         slowZombieBaseDamage = baseSlowZombieDamage + currentLevel;
     
         totalZombies = 5 + currentLevel * 3; // Erhöht die Anzahl normaler Zombies
@@ -770,15 +771,15 @@ function updateZombies() {
             knockbackDistance = stats.knockbackDistance ?? knockbackDistance;
     
             console.log("✅ SPIELSTAND ÜBERNOMMEN:");
-            console.log("💰 Geld:", totalMoney);
-            console.log("🌊 Level:", currentLevel);
-            console.log("🛠️ Upgrades:", upgradeLevels);
-            console.log("🔫 Waffenwerte:", { shotCooldown, bulletDamage, bulletSpeed, knockbackDistance });
+            console.log("Geld:", totalMoney);
+            console.log("Level:", currentLevel);
+            console.log("Upgrades:", upgradeLevels);
+            console.log("Waffenwerte:", { shotCooldown, bulletDamage, bulletSpeed, knockbackDistance });
     
             updateMoneyDisplay();      // Aktualisiert das Geld in der UI
             updateUpgradeDisplays();
             updateCurrentLevelDisplay();  
-            nextLevel();    
+             
 
             console.log("✅ UI erfolgreich aktualisiert.");
 
@@ -794,10 +795,10 @@ function updateZombies() {
     console.log("🔄 SPIELWERTE IN SPIELMECHANIK ÜBERTRAGEN...");
 
     // Falls das Spiel eine Funktion hat, um das Level zu setzen
-    if (typeof setWave === "function") {
-        setWave(currentLevel);
+    if (typeof  updateCurrentLevelDisplaye === "function") {
+         updateCurrentLevelDisplaye(currentLevel);
     } else {
-        console.warn("⚠️ Funktion 'setWave()' nicht gefunden!");
+        console.warn("⚠️ Funktion ' updateCurrentLevelDisplaye()' nicht gefunden!");
     }
 
     // Falls eine Upgrade-Funktion existiert

@@ -104,7 +104,7 @@ app.post("/api/register", async (req, res) => {
             email,
             password: hashedPassword, // Speichert das gehashte Passwort
             stats: {
-                wave: 1,
+                wave: 0,
                 money: 100,
                 upgrades: {
                     rate: 1,
