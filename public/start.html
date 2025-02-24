@@ -185,6 +185,15 @@
             document.getElementById("registerContainer").style.display = "flex";
         });
 
+        document.getElementById("backButton").addEventListener("click", (e) => {
+            document.getElementById("mainContainer").style.display = "flex";
+            document.getElementById("authContainer").style.display = "none";
+        });
+        document.getElementById("backToLoginButton").addEventListener("click", (e) => {
+            document.getElementById("authContainer").style.display = "flex";
+            document.getElementById("registerContainer").style.display = "none";
+        });
+
         document.getElementById("authForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
